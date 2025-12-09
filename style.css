@@ -135,11 +135,6 @@ button.wide {
   line-height: 1.6;
 }
 
-.lede.single-line {
-  white-space: nowrap;
-  max-width: 100%;
-}
-
 .highlight {
   color: var(--accent-2);
 }
