@@ -400,6 +400,36 @@ input:focus {
   gap: 4px;
 }
 
+.onboarding-card ol {
+  color: var(--muted);
+  padding-left: 18px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.resources-title {
+  font-weight: 700;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.resources {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.resources a {
+  color: var(--accent-2);
+  text-decoration: none;
+}
+
+.resources a:hover {
+  text-decoration: underline;
+}
+
 .footer {
   margin-top: 28px;
   padding: 16px 0 8px;
