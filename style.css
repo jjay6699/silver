@@ -487,3 +487,20 @@ input:focus {
     align-items: flex-start;
   }
 }
+
+@media (max-width: 900px) {
+  .nav-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .nav-actions > * {
+    min-width: 160px;
+    flex: 1 1 auto;
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 12px;
+  }
+}
