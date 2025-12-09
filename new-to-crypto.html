@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New to Crypto? | The People's Co-operation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="nav">
+      <div class="logo">
+        <div class="mark">TP</div>
+        <div>
+          <div class="brand">The People's Co-operation</div>
+          <div class="tag">Silver-backed on ERC20</div>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="nav-link">← Back to app</a>
+        <button class="primary" onclick="location.href='index.html'">Mint with TPC</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="label">Onboarding guide</div>
+            <h2>Choose your path to fund TPC</h2>
+          </div>
+        </div>
+        <p class="lede" style="max-width: 980px;">
+          New to crypto? Pick the flow that fits your privacy and speed preferences. Both paths end with ETH in your Metamask so you can mint TPC.
+        </p>
+      </section>
+
+      <section class="onboarding">
+        <div class="onboarding-grid">
+          <div class="onboarding-card">
+            <h3>No KYC (Bisq)</h3>
+            <p>Stay pseudonymous by using Bisq (P2P, no central custody) to acquire BTC, then swap to ETH and bridge if needed.</p>
+            <ol>
+              <li>Download Bisq from bisq.network and verify signatures.</li>
+              <li>Fund a trade: choose a payment rail (cash deposit, SEPA/ACH, etc.) and lock the required security deposit.</li>
+              <li>Buy BTC P2P; wait for confirmations and release.</li>
+              <li>Swap BTC → ETH using a non-custodial swap or DEX that supports wrapped BTC → ETH.</li>
+              <li>Send ETH to your Metamask address on the target network (keep some for gas).</li>
+              <li>Return to the app and mint TPC.</li>
+            </ol>
+            <ul>
+              <li>No ID submitted; trades can be slower and spreads wider.</li>
+              <li>Use verified binaries; double-check addresses and network fees.</li>
+              <li>Keep a small gas buffer after swapping to ETH.</li>
+            </ul>
+          </div>
+          <div class="onboarding-card">
+            <h3>With KYC (Card/Bank On-ramps)</h3>
+            <p>Use a regulated on-ramp like MoonPay, Coinbase, or Binance to buy ETH directly to your wallet.</p>
+            <ol>
+              <li>Create and verify your account (KYC) on the on-ramp of choice.</li>
+              <li>Add a payment method (card or bank) and purchase ETH.</li>
+              <li>Withdraw ETH to your Metamask address on the target chain (check the network before sending).</li>
+              <li>Hold a small amount of ETH for gas fees.</li>
+              <li>Open the app and mint TPC.</li>
+            </ol>
+            <ul>
+              <li>Fastest funding, predictable pricing and support.</li>
+              <li>Always match the withdrawal chain to your Metamask network.</li>
+              <li>Keep transaction receipts for your records.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      © <span id="year"></span> The People's Co-operation. All rights reserved.
+    </footer>
+  </div>
+  <script>
+    const yearEl = document.getElementById("year");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

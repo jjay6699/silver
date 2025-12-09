@@ -81,6 +81,22 @@ body {
   gap: 10px;
 }
 
+.nav-link {
+  color: var(--text);
+  text-decoration: none;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.nav-link:hover {
+  color: var(--accent-2);
+  border-color: var(--outline);
+  background: var(--panel-strong);
+}
+
 button {
   border: 1px solid var(--outline);
   background: transparent;
