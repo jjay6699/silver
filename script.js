@@ -25,7 +25,6 @@ const slvrInput = document.getElementById("slvrInput");
 const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
-const maxBtn = document.getElementById("maxButton");
 
 async function fetchSpotPrice() {
   try {
@@ -250,10 +249,6 @@ function bindEvents() {
   connectBtn.addEventListener("click", connectWallet);
   mintBtn.addEventListener("click", handleMint);
   refreshBtn.addEventListener("click", hydratePrices);
-  maxBtn.addEventListener("click", () => {
-    slvrInput.value = 1000;
-    recalcFromInput();
-  });
 }
 
 (function init() {
