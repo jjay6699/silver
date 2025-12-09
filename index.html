@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The People's Co-operation | Silver on-chain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="nav">
+      <div class="logo">
+        <div class="mark">TP</div>
+        <div>
+          <div class="brand">The People's Co-operation</div>
+          <div class="tag">Silver-backed on ERC20</div>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="refreshPrice" class="ghost">Refresh price</button>
+        <button id="connectWallet" class="primary">Connect Wallet</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="hero">
+        <div class="welcome" id="welcomeMessage">Welcome, connect your wallet</div>
+        <div class="eyebrow">On-chain silver vault</div>
+        <h1>Mint physical silver with TPC</h1>
+        <p class="lede single-line">
+          Swap TPC for vaulted 1 oz bars at <span class="highlight">104% of the live spot</span>. Every 100 TPC mints 1 oz you can redeem later.
+        </p>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label">Spot Silver</div>
+            <div class="value" id="spotPrice">$--</div>
+            <div class="sub">Live per oz (USD)</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Mint Price</div>
+            <div class="value" id="mintPrice">$--</div>
+            <div class="sub">104% premium</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Wallet</div>
+            <div class="value" id="walletStatus">Not connected</div>
+            <div class="sub">Metamask · ERC20</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="label">Mint module</div>
+            <h2>Purchase silver with TPC</h2>
+          </div>
+          <div class="pill">1 oz = 100 TPC</div>
+        </div>
+
+        <div class="input-row">
+          <label for="slvrInput">TPC amount</label>
+          <div class="input-wrap">
+            <input id="slvrInput" type="number" min="0" step="1" value="200" />
+            <span class="suffix">TPC</span>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="summary-item">
+            <div class="label">You mint</div>
+            <div class="value" id="mintAmount">-- oz</div>
+            <div class="sub">Physical silver</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">USD value</div>
+            <div class="value" id="usdValue">$--</div>
+            <div class="sub">At mint price</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">ETH to send</div>
+            <div class="value" id="ethValue">-- ETH</div>
+            <div class="sub">Live ETH/USD</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">Per oz premium</div>
+            <div class="value">4%</div>
+            <div class="sub">Fixed over spot</div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <button id="maxButton" class="ghost">Max (demo)</button>
+          <button id="mintButton" class="primary wide">Swap & Mint</button>
+        </div>
+
+        <div class="hint">
+          <div class="dot"></div>
+          <span>
+            Live pricing updates every refresh. Transactions route through your connected ERC20 wallet.
+          </span>
+        </div>
+      </section>
+
+      <section class="feed">
+        <div class="feed-header">
+          <div>
+          <div class="label">Mint feed</div>
+          <h2>Recent serials</h2>
+        </div>
+          <div class="pill muted">Demo-only preview</div>
+        </div>
+        <div id="mintFeed" class="feed-list">
+          <div class="feed-item empty">No mints yet. Complete a mint to see a serial.</div>
+        </div>
+      </section>
+
+      <section class="info">
+        <div class="info-card">
+          <h3>Vaulted & auditable</h3>
+          <p>Every minted ounce is backed by vaulted silver. Redemption requires a simple burn + ship request.</p>
+        </div>
+        <div class="info-card">
+          <h3>On-chain settlement</h3>
+          <p>Connect Metamask, approve SLVR spend, and sign the mint tx. We never take custody of your wallet keys.</p>
+        </div>
+        <div class="info-card">
+          <h3>Transparent pricing</h3>
+          <p>We pull spot from multiple sources and lock a 4% premium per oz so you always see the true landed cost.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.min.js" integrity="sha512-HO1+8d8q1yNi25A94ppIqh+apMI2vlA38nSxrdbidKdvUSsfx8bVsgcuyo6edSxnl2xe50Tzw9uQWGWpZ6YG8A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="script.js"></script>
+</body>
+</html>
