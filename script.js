@@ -265,6 +265,8 @@ function bindEvents() {
   renderMintFeed();
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+  // Auto-refresh pricing every 60 seconds
+  setInterval(hydratePrices, 60 * 1000);
 })();
 
 function buildSerial() {
