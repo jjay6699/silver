@@ -26,6 +26,7 @@ const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const maxBtn = document.getElementById("maxButton");
+const newToCryptoBtn = document.getElementById("newToCrypto");
 
 async function fetchSpotPrice() {
   try {
@@ -254,6 +255,12 @@ function bindEvents() {
     slvrInput.value = 1000;
     recalcFromInput();
   });
+  if (newToCryptoBtn) {
+    newToCryptoBtn.addEventListener("click", () => {
+      const target = document.getElementById("onboarding");
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 (function init() {
