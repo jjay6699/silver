@@ -263,6 +263,8 @@ function bindEvents() {
   attachWalletListeners();
   updateWalletUI();
   renderMintFeed();
+  const yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 })();
 
 function buildSerial() {

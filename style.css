@@ -343,6 +343,14 @@ input:focus {
   color: var(--muted);
 }
 
+.footer {
+  margin-top: 28px;
+  padding: 16px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
   .nav {
     flex-direction: column;
