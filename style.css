@@ -103,8 +103,8 @@ a:hover {
 
 .nav-link:hover {
   color: var(--accent-2);
-  border-color: var(--outline);
-  background: var(--panel-strong);
+  border-color: transparent;
+  background: transparent;
 }
 
 .button-link {
