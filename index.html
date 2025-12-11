@@ -20,17 +20,43 @@
             <div class="tag">Silver-backed on ERC20</div>
           </div>
         </a>
-        <div class="currency-toggle" role="group" aria-label="Select currency">
-          <button class="currency-btn active" data-currency="USD">USD</button>
-          <button class="currency-btn" data-currency="AUD">AUD</button>
+        <div class="nav-extras">
+          <div class="currency-toggle" role="group" aria-label="Select currency">
+            <button class="currency-btn active" data-currency="USD">USD</button>
+            <button class="currency-btn" data-currency="AUD">AUD</button>
+          </div>
+          <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
+          <button id="refreshPrice" class="ghost">Refresh price</button>
         </div>
+        <button id="menuToggle" class="hamburger" aria-label="Open menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
       <div class="nav-actions">
-        <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
-        <button id="refreshPrice" class="ghost">Refresh price</button>
         <button id="connectWallet" class="primary">Connect Wallet</button>
       </div>
     </header>
+
+    <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+      <div class="mobile-menu-panel">
+        <button id="closeMenu" class="close-menu" aria-label="Close menu">×</button>
+        <div class="mobile-menu-group">
+          <div class="label">Currency</div>
+          <div class="currency-toggle" role="group" aria-label="Select currency (mobile)">
+            <button class="currency-btn active" data-currency="USD">USD</button>
+            <button class="currency-btn" data-currency="AUD">AUD</button>
+          </div>
+        </div>
+        <div class="mobile-menu-group">
+          <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
+        </div>
+        <div class="mobile-menu-group">
+          <button id="refreshPriceMobile" class="ghost wide">Refresh price</button>
+        </div>
+      </div>
+    </div>
 
     <main class="layout">
       <section class="hero">

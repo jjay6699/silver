@@ -58,6 +58,12 @@ a:hover {
   flex: 1;
 }
 
+.nav-extras {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -99,6 +105,64 @@ a:hover {
   gap: 10px;
   margin-left: auto;
   align-items: center;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--panel-strong);
+  border: 1px solid var(--outline);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+}
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 20px;
+  z-index: 20;
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+.mobile-menu-panel {
+  background: var(--panel);
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 260px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.close-menu {
+  background: transparent;
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 6px 10px;
+  margin-left: auto;
+  display: block;
+}
+
+.mobile-menu-group {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
 }
 
 .currency-toggle {
@@ -510,8 +574,12 @@ input:focus {
     width: 100%;
     gap: 8px;
   }
-  .nav-top .currency-toggle {
-    margin-left: 0;
+  .nav-extras {
+    display: none;
+  }
+  .hamburger {
+    display: inline-flex;
+    margin-left: auto;
   }
   .nav-actions {
     width: 100%;

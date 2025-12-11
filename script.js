@@ -29,6 +29,10 @@ const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
+const refreshBtnMobile = document.getElementById("refreshPriceMobile");
+const menuToggle = document.getElementById("menuToggle");
+const mobileMenu = document.getElementById("mobileMenu");
+const closeMenuBtn = document.getElementById("closeMenu");
 const currencyButtons = document.querySelectorAll(".currency-btn");
 const fiatValueLabel = document.getElementById("fiatValueLabel");
 const MINT_BALANCE_OZ = 300;
@@ -271,11 +275,19 @@ function bindEvents() {
   connectBtn.addEventListener("click", connectWallet);
   mintBtn.addEventListener("click", handleMint);
   refreshBtn.addEventListener("click", hydratePrices);
+  if (refreshBtnMobile) refreshBtnMobile.addEventListener("click", () => { hydratePrices(); closeMenu(); });
   currencyButtons.forEach((btn) =>
     btn.addEventListener("click", () => {
       setCurrency(btn.dataset.currency);
     })
   );
+  if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
+  if (closeMenuBtn) closeMenuBtn.addEventListener("click", closeMenu);
+  if (mobileMenu) {
+    mobileMenu.addEventListener("click", (e) => {
+      if (e.target === mobileMenu) closeMenu();
+    });
+  }
 }
 
 (function init() {
@@ -369,4 +381,25 @@ function setCurrency(currency) {
   currencyButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.currency === currency));
   updateFiatDisplays();
   recalcFromInput();
+}
+
+function toggleMenu() {
+  const isOpen = mobileMenu?.classList.contains("open");
+  if (isOpen) {
+    closeMenu();
+  } else {
+    openMenu();
+  }
+}
+
+function openMenu() {
+  if (!mobileMenu || !menuToggle) return;
+  mobileMenu.classList.add("open");
+  menuToggle.setAttribute("aria-expanded", "true");
+}
+
+function closeMenu() {
+  if (!mobileMenu || !menuToggle) return;
+  mobileMenu.classList.remove("open");
+  menuToggle.setAttribute("aria-expanded", "false");
 }
