@@ -286,6 +286,16 @@ input:focus {
   border-radius: 12px;
 }
 
+.summary-item.balance {
+  border-color: rgba(122, 217, 255, 0.45);
+  background: linear-gradient(145deg, rgba(122, 217, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 10px 30px rgba(122, 217, 255, 0.18);
+}
+
+.summary-item.balance .value {
+  color: var(--accent-2);
+}
+
 .cta-row {
   display: flex;
   gap: 10px;

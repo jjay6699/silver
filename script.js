@@ -25,6 +25,8 @@ const slvrInput = document.getElementById("slvrInput");
 const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
+const mintBalanceEl = document.getElementById("mintBalance");
+const MINT_BALANCE_OZ = 300;
 
 async function fetchSpotPrice() {
   try {
@@ -258,6 +260,7 @@ function bindEvents() {
   attachWalletListeners();
   updateWalletUI();
   renderMintFeed();
+  if (mintBalanceEl) mintBalanceEl.textContent = `${MINT_BALANCE_OZ} oz`;
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
   // Auto-refresh pricing every 60 seconds
