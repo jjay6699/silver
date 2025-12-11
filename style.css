@@ -45,7 +45,7 @@ a:hover {
 
 .nav {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 40px;
@@ -98,6 +98,7 @@ a:hover {
   display: flex;
   gap: 10px;
   margin-left: auto;
+  align-items: center;
 }
 
 .currency-toggle {
@@ -508,9 +509,6 @@ input:focus {
     flex-wrap: wrap;
     width: 100%;
     gap: 8px;
-  }
-  .nav-top .nav-link {
-    margin-left: auto;
   }
   .nav-top .currency-toggle {
     margin-left: 0;
