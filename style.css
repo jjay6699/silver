@@ -192,6 +192,12 @@ button.wide {
   backdrop-filter: blur(8px);
 }
 
+.stat-card.highlight-card {
+  border-color: rgba(122, 217, 255, 0.45);
+  background: linear-gradient(150deg, rgba(122, 217, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 12px 32px rgba(122, 217, 255, 0.18);
+}
+
 .label {
   color: var(--muted);
   font-size: 13px;
