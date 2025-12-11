@@ -165,10 +165,12 @@ a:hover {
   margin-top: 14px;
   display: grid;
   gap: 10px;
+  justify-items: start;
 }
 
 .mobile-menu .currency-toggle {
   width: auto;
+  align-self: center;
 }
 
 .mobile-menu .currency-toggle .currency-btn {
