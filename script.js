@@ -1,6 +1,7 @@
 const SPOT_ENDPOINT_PRIMARY = "https://data-asg.goldprice.org/dbXRates/USD";
 const SPOT_ENDPOINT_FALLBACK = "https://api.metals.live/v1/spot/silver";
 const ETH_PRICE_ENDPOINT = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
+const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
@@ -8,11 +9,13 @@ const ETHERS_CDNS = [
 ];
 const TREASURY_ADDRESS = "0xd85ca20db6e444e3b4c4b3c18a36fc45f7a66991";
 
-let spotPrice = null;
-let mintPrice = null;
+let spotPriceUsd = null;
+let mintPriceUsd = null;
 let signerAddress = null;
 let mintedItems = [];
 let ethPrice = null;
+let audRate = null; // AUD per 1 USD
+let currentCurrency = "USD";
 
 const spotEl = document.getElementById("spotPrice");
 const mintEl = document.getElementById("mintPrice");
@@ -26,6 +29,8 @@ const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
+const currencyButtons = document.querySelectorAll(".currency-btn");
+const fiatValueLabel = document.getElementById("fiatValueLabel");
 const MINT_BALANCE_OZ = 300;
 
 async function fetchSpotPrice() {
@@ -52,11 +57,12 @@ async function hydratePrices() {
   mintEl.textContent = "Loading...";
   ethValueEl.textContent = "Loading...";
   try {
-    spotPrice = await fetchSpotPrice();
-    mintPrice = spotPrice * 1.04;
+    const [spot, fx] = await Promise.all([fetchSpotPrice(), fetchFxRates()]);
+    spotPriceUsd = spot;
+    mintPriceUsd = spotPriceUsd * 1.04;
+    audRate = fx;
     ethPrice = await fetchEthPrice();
-    spotEl.textContent = formatUSD(spotPrice);
-    mintEl.textContent = formatUSD(mintPrice);
+    updateFiatDisplays();
     updateEthDisplay();
     recalcFromInput();
   } catch (err) {
@@ -77,13 +83,18 @@ async function fetchEthPrice() {
   return price;
 }
 
-function formatUSD(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+async function fetchFxRates() {
+  const res = await fetch(FX_ENDPOINT, { cache: "no-cache" });
+  if (!res.ok) throw new Error("FX rate feed failed");
+  const data = await res.json();
+  const rate = Number(data?.rates?.AUD);
+  if (!Number.isFinite(rate)) throw new Error("AUD rate invalid");
+  return rate;
+}
+
+function getFiatMultiplier(currency = currentCurrency) {
+  if (currency === "AUD") return audRate || null;
+  return 1;
 }
 
 function recalcFromInput() {
@@ -91,9 +102,12 @@ function recalcFromInput() {
   const ounces = slvr / 100;
   mintAmountEl.textContent = ounces ? `${ounces.toFixed(2)} oz` : "-- oz";
 
-  if (mintPrice) {
-    const usdValue = ounces * mintPrice;
-    usdValueEl.textContent = ounces ? formatUSD(usdValue) : "$0.00";
+  const usdMintPrice = mintPriceUsd;
+  const fx = getFiatMultiplier();
+  if (usdMintPrice && fx) {
+    const usdValueBase = ounces * usdMintPrice;
+    const fiatValue = usdValueBase * fx;
+    usdValueEl.textContent = ounces ? formatFiat(fiatValue, currentCurrency) : formatFiat(0, currentCurrency);
   } else {
     usdValueEl.textContent = "--";
   }
@@ -201,7 +215,12 @@ async function handleMint() {
   }
 
   const ounces = slvr / 100;
-  const usdValue = ounces * (mintPrice || 0);
+  if (!mintPriceUsd) {
+    alert("Mint price unavailable. Please refresh price and try again.");
+    return;
+  }
+
+  const usdValue = ounces * mintPriceUsd;
   const ethNeeded = ethPrice ? usdValue / ethPrice : null;
 
   if (!ethPrice) {
@@ -236,11 +255,12 @@ async function handleMint() {
 
   // Demo-only mint record
   const serial = buildSerial();
+  const fx = getFiatMultiplier() || 1;
   mintedItems.unshift({
     serial,
     ounces: ounces.toFixed(2),
     slvr: slvr.toFixed(0),
-    usd: formatUSD(usdValue),
+    usd: formatFiat(usdValue * fx, currentCurrency),
     ts: new Date(),
   });
   renderMintFeed();
@@ -251,6 +271,11 @@ function bindEvents() {
   connectBtn.addEventListener("click", connectWallet);
   mintBtn.addEventListener("click", handleMint);
   refreshBtn.addEventListener("click", hydratePrices);
+  currencyButtons.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      setCurrency(btn.dataset.currency);
+    })
+  );
 }
 
 (function init() {
@@ -305,7 +330,7 @@ function setWelcomeText(addr) {
 function updateEthDisplay(slvrInputValue) {
   const slvr = slvrInputValue !== undefined ? Number(slvrInputValue) || 0 : Number(slvrInput.value) || 0;
   const ounces = slvr / 100;
-  const usdValue = mintPrice ? ounces * mintPrice : null;
+  const usdValue = mintPriceUsd ? ounces * mintPriceUsd : null;
   if (!ethPrice || !usdValue) {
     ethValueEl.textContent = "-- ETH";
     return;
@@ -317,4 +342,31 @@ function updateEthDisplay(slvrInputValue) {
 function setMintBalanceText() {
   const text = `${MINT_BALANCE_OZ} oz`;
   if (mintBalanceTopEl) mintBalanceTopEl.textContent = text;
+}
+
+function formatFiat(value, currency = currentCurrency) {
+  return new Intl.NumberFormat(currency === "AUD" ? "en-AU" : "en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function updateFiatDisplays() {
+  if (fiatValueLabel) fiatValueLabel.textContent = `${currentCurrency} value`;
+  const fx = getFiatMultiplier();
+  if (!spotPriceUsd || !mintPriceUsd || !fx) return;
+  const spot = spotPriceUsd * fx;
+  const mint = mintPriceUsd * fx;
+  spotEl.textContent = formatFiat(spot);
+  mintEl.textContent = formatFiat(mint);
+}
+
+function setCurrency(currency) {
+  if (currency === currentCurrency) return;
+  currentCurrency = currency;
+  currencyButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.currency === currency));
+  updateFiatDisplays();
+  recalcFromInput();
 }
