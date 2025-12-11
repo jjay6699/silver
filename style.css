@@ -169,12 +169,14 @@ a:hover {
 }
 
 .mobile-menu .currency-toggle {
-  width: auto;
-  align-self: center;
+  width: 100%;
+  align-self: stretch;
 }
 
 .mobile-menu .currency-toggle .currency-btn {
-  padding: 10px 18px;
+  padding: 10px 14px;
+  flex: 1 1 50%;
+  text-align: center;
 }
 
 .mobile-menu .nav-link {
@@ -184,13 +186,16 @@ a:hover {
   background: rgba(255, 255, 255, 0.06);
   text-align: center;
   font-weight: 700;
+  width: 100%;
+  display: block;
 }
 
 .mobile-menu .ghost {
-  background: linear-gradient(135deg, #4bf3c9, #7ad9ff);
-  color: #02101d;
-  border: none;
-  box-shadow: 0 8px 26px rgba(122, 217, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f6ff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  width: 100%;
 }
 
 .currency-toggle {
