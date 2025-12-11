@@ -301,7 +301,7 @@ button.wide {
 
 .lede {
   color: var(--muted);
-  max-width: 980px;
+  max-width: 760px;
   line-height: 1.6;
 }
 
