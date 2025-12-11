@@ -25,7 +25,6 @@ const slvrInput = document.getElementById("slvrInput");
 const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
-const mintBalanceEl = document.getElementById("mintBalance");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
 const MINT_BALANCE_OZ = 300;
 
@@ -317,6 +316,5 @@ function updateEthDisplay(slvrInputValue) {
 
 function setMintBalanceText() {
   const text = `${MINT_BALANCE_OZ} oz`;
-  if (mintBalanceEl) mintBalanceEl.textContent = text;
   if (mintBalanceTopEl) mintBalanceTopEl.textContent = text;
 }
