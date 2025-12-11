@@ -138,6 +138,7 @@ async function connectWallet() {
     const account = accounts?.[0];
     if (!account) throw new Error("No account returned");
     signerAddress = account;
+    loadMintHistoryForAddress(account);
     updateWalletUI();
     attachWalletListeners();
     return provider.getSigner();
@@ -178,11 +179,14 @@ function attachWalletListeners() {
   window.ethereum.on("accountsChanged", (accounts) => {
     const account = accounts?.[0];
     signerAddress = account || null;
+    loadMintHistoryForAddress(account);
     updateWalletUI();
   });
   window.ethereum.on("disconnect", () => {
     signerAddress = null;
+    mintedItems = [];
     updateWalletUI();
+    renderMintFeed();
   });
   window.ethereum._slvrBound = true;
 }
@@ -267,6 +271,7 @@ async function handleMint() {
     usd: formatFiat(usdValue * fx, currentCurrency),
     ts: new Date(),
   });
+  persistMintHistory();
   renderMintFeed();
 }
 
@@ -295,6 +300,7 @@ function bindEvents() {
   hydratePrices();
   recalcFromInput();
   attachWalletListeners();
+  attemptSilentWalletRestore();
   updateWalletUI();
   renderMintFeed();
   setMintBalanceText();
@@ -402,4 +408,57 @@ function closeMenu() {
   if (!mobileMenu || !menuToggle) return;
   mobileMenu.classList.remove("open");
   menuToggle.setAttribute("aria-expanded", "false");
+}
+
+function storageKeyForAddress(addr) {
+  if (!addr) return null;
+  return `slvr_mints_${addr.toLowerCase()}`;
+}
+
+function loadMintHistoryForAddress(addr) {
+  const key = storageKeyForAddress(addr);
+  mintedItems = [];
+  if (!key) {
+    renderMintFeed();
+    return;
+  }
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        mintedItems = parsed;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load mint history", err);
+  }
+  renderMintFeed();
+}
+
+function persistMintHistory() {
+  const key = storageKeyForAddress(signerAddress);
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(mintedItems.slice(0, 50)));
+  } catch (err) {
+    console.warn("Failed to persist mint history", err);
+  }
+}
+
+async function attemptSilentWalletRestore() {
+  if (!window.ethereum) return;
+  try {
+    await loadEthers();
+    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    const accounts = await provider.send("eth_accounts", []);
+    const account = accounts?.[0];
+    if (account) {
+      signerAddress = account;
+      loadMintHistoryForAddress(account);
+      updateWalletUI();
+    }
+  } catch (err) {
+    console.warn("Silent wallet restore skipped", err.message);
+  }
 }
