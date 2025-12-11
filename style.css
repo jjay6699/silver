@@ -501,6 +501,40 @@ input:focus {
     flex-direction: column;
     align-items: flex-start;
   }
+  .nav-left {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .currency-toggle {
+    margin-left: auto;
+  }
+  .currency-toggle .currency-btn {
+    padding: 8px 12px;
+  }
+  .nav-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "new refresh"
+      "connect connect";
+    gap: 8px;
+  }
+  .nav-actions > * {
+    width: 100%;
+  }
+  .nav-actions .nav-link {
+    grid-area: new;
+    text-align: center;
+    justify-content: center;
+  }
+  #refreshPrice {
+    grid-area: refresh;
+  }
+  #connectWallet {
+    grid-area: connect;
+  }
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
