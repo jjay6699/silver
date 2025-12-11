@@ -45,16 +45,17 @@ a:hover {
 
 .nav {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 40px;
 }
 
-.nav-left {
+.nav-top {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  flex: 1;
 }
 
 .logo {
@@ -96,6 +97,7 @@ a:hover {
 .nav-actions {
   display: flex;
   gap: 10px;
+  margin-left: auto;
 }
 
 .currency-toggle {
@@ -500,40 +502,30 @@ input:focus {
   .nav {
     flex-direction: column;
     align-items: flex-start;
-  }
-  .nav-left {
-    width: 100%;
-    flex-wrap: wrap;
     gap: 10px;
   }
-  .currency-toggle {
+  .nav-top {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .nav-top .nav-link {
     margin-left: auto;
   }
-  .currency-toggle .currency-btn {
-    padding: 8px 12px;
+  .nav-top .currency-toggle {
+    margin-left: 0;
   }
   .nav-actions {
     width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "new refresh"
-      "connect connect";
+    display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .nav-actions > * {
-    width: 100%;
-  }
-  .nav-actions .nav-link {
-    grid-area: new;
-    text-align: center;
-    justify-content: center;
-  }
-  #refreshPrice {
-    grid-area: refresh;
+    flex: 1 1 48%;
   }
   #connectWallet {
-    grid-area: connect;
+    flex: 1 1 100%;
   }
   .panel-header {
     flex-direction: column;
