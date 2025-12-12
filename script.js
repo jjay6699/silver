@@ -1,6 +1,6 @@
 const SPOT_ENDPOINT_PRIMARY = "https://data-asg.goldprice.org/dbXRates/USD";
 const SPOT_ENDPOINT_FALLBACK = "https://api.metals.live/v1/spot/silver";
-const ETH_PRICE_ENDPOINT = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
+const ETH_PRICE_ENDPOINT = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud";
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
@@ -13,7 +13,8 @@ let spotPriceUsd = null;
 let mintPriceUsd = null;
 let signerAddress = null;
 let mintedItems = [];
-let ethPrice = null;
+let ethPriceUsd = null;
+let ethPriceAud = null;
 let audRate = null; // AUD per 1 USD
 let currentCurrency = "USD";
 let web3Provider = null;
@@ -84,14 +85,17 @@ async function hydratePrices() {
     }
 
     try {
-      ethPrice = await fetchEthPrice();
+      const { usd, aud } = await fetchEthPrice();
+      ethPriceUsd = usd;
+      ethPriceAud = aud;
     } catch (ethErr) {
-      ethPrice = null;
+      ethPriceUsd = null;
+      ethPriceAud = null;
       console.warn("ETH feed unavailable", ethErr.message);
     }
 
     updateFiatDisplays();
-    if (ethPrice) updateEthDisplay();
+    if (ethPriceUsd) updateEthDisplay();
     recalcFromInput();
   } catch (err) {
     console.error(err);
@@ -106,9 +110,10 @@ async function fetchEthPrice() {
   const res = await fetch(ETH_PRICE_ENDPOINT, { cache: "no-cache" });
   if (!res.ok) throw new Error("ETH price feed failed");
   const data = await res.json();
-  const price = Number(data?.ethereum?.usd);
-  if (!Number.isFinite(price)) throw new Error("ETH price invalid");
-  return price;
+  const priceUsd = Number(data?.ethereum?.usd);
+  const priceAud = Number(data?.ethereum?.aud);
+  if (!Number.isFinite(priceUsd)) throw new Error("ETH price invalid");
+  return { usd: priceUsd, aud: Number.isFinite(priceAud) ? priceAud : null };
 }
 
 async function fetchFxRates() {
@@ -415,14 +420,15 @@ function updateEthDisplay(slvrInputValue) {
   const usdValue = mintPriceUsd ? ounces * mintPriceUsd : null;
   const fx = getFiatMultiplier();
   const fiatValue = usdValue && fx ? usdValue * fx : null;
-  if (!ethPrice || !usdValue) {
+  const ethPx = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
+  if (!ethPx || !usdValue) {
     ethValueEl.textContent = "-- ETH";
     return;
   }
   const ethNeeded =
     currentCurrency === "AUD"
-      ? fiatValue && fx ? (fiatValue / fx) / ethPrice : null
-      : usdValue / ethPrice;
+      ? fiatValue && ethPx ? fiatValue / ethPx : usdValue / ethPx
+      : usdValue / ethPx;
   ethValueEl.textContent = `${ethNeeded.toFixed(ETH_DISPLAY_DECIMALS)} ETH`;
   if (ethValueLabelEl) ethValueLabelEl.textContent = `Live ETH/${currentCurrency}`;
 }
