@@ -31,6 +31,7 @@ const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
 const walletEthBalanceEl = document.getElementById("walletEthBalance");
+const walletTpcBalanceEl = document.getElementById("walletTpcBalance");
 const totalMintedAmountEl = document.getElementById("totalMintedAmount");
 const totalMintedValueFiatEl = document.getElementById("totalMintedValueFiat");
 const totalMintedValueEthEl = document.getElementById("totalMintedValueEth");
@@ -555,19 +556,27 @@ async function updateWalletBalance() {
   if (!walletEthBalanceEl) return;
   if (!signerAddress || !web3Provider) {
     setWalletBalanceText(null);
+    setWalletTpcBalanceText(null);
     return;
   }
   try {
     const balance = await web3Provider.getBalance(signerAddress);
     const formatted = Number(ethers.utils.formatEther(balance)).toFixed(ETH_DISPLAY_DECIMALS);
     setWalletBalanceText(formatted);
+    setWalletTpcBalanceText(null); // Placeholder until token is live
   } catch (err) {
     console.warn("Unable to fetch wallet balance", err.message);
     setWalletBalanceText(null);
+    setWalletTpcBalanceText(null);
   }
 }
 
 function setWalletBalanceText(value) {
   if (!walletEthBalanceEl) return;
   walletEthBalanceEl.textContent = value ? `${Number(value).toFixed(ETH_DISPLAY_DECIMALS)} ETH` : "--";
+}
+
+function setWalletTpcBalanceText(value) {
+  if (!walletTpcBalanceEl) return;
+  walletTpcBalanceEl.textContent = value ?? "--";
 }
