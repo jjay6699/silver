@@ -321,7 +321,7 @@ function bindEvents() {
     hydratePrices();
     recalcFromInput();
     setMintBalanceText();
-    setInterval(hydratePrices, 60 * 1000);
+    setInterval(hydratePrices, 120 * 1000);
   }
   attachWalletListeners();
   attemptSilentWalletRestore();
