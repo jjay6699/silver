@@ -514,6 +514,7 @@ input:focus {
   grid-template-columns: 2fr 1fr;
   gap: 12px;
   align-items: end;
+  margin-top: 6px;
 }
 
 .cta-row.inline {
