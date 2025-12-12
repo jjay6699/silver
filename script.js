@@ -375,6 +375,26 @@ function renderMintFeed() {
   updateMintTotals();
 }
 
+function normalizeMintItem(item = {}) {
+  const normalized = { ...item };
+  const oz = Number(normalized.ounces);
+  const slvr = Number(normalized.slvr);
+  // Backfill ounces if missing
+  if (!Number.isFinite(oz) && Number.isFinite(slvr)) {
+    normalized.ounces = (slvr / 100).toFixed(2);
+  }
+  // Backfill usdRaw from formatted string if missing
+  if (!Number.isFinite(Number(normalized.usdRaw)) && typeof normalized.usd === "string") {
+    const parsedUsd = parseFloat(normalized.usd.replace(/[^0-9.]+/g, ""));
+    if (Number.isFinite(parsedUsd)) normalized.usdRaw = parsedUsd;
+  }
+  // Backfill ethRaw if missing and we have usdRaw + ethPrice
+  if (!Number.isFinite(Number(normalized.ethRaw)) && Number.isFinite(Number(normalized.usdRaw)) && Number.isFinite(ethPrice)) {
+    normalized.ethRaw = Number(normalized.usdRaw) / ethPrice;
+  }
+  return normalized;
+}
+
 function setWelcomeText(addr) {
   if (!welcomeEl) return;
   if (addr) {
@@ -427,18 +447,22 @@ function updateMintTotals() {
   let totalOz = 0;
   let totalUsd = 0;
   let totalEth = 0;
-  mintedItems.forEach((item) => {
-    const oz = Number(item.ounces) || 0;
+  mintedItems.forEach((rawItem) => {
+    const item = normalizeMintItem(rawItem);
+    const oz = Number(item.ounces) || (Number(item.slvr) || 0) / 100 || 0;
     const usdRaw = Number(item.usdRaw);
     const ethRaw = Number(item.ethRaw);
     totalOz += oz;
     if (Number.isFinite(usdRaw)) totalUsd += usdRaw;
     if (Number.isFinite(ethRaw)) totalEth += ethRaw;
   });
-  if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz ? `${totalOz.toFixed(2)} oz` : "--";
+  const ozText = `${totalOz.toFixed(2)} oz`;
+  if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz > 0 ? ozText : "0.00 oz";
   const fx = getFiatMultiplier();
-  if (totalMintedValueFiatEl) totalMintedValueFiatEl.textContent = totalUsd ? formatFiat(totalUsd * fx, currentCurrency) : formatFiat(0, currentCurrency);
-  if (totalMintedValueEthEl) totalMintedValueEthEl.textContent = totalEth ? `${totalEth.toFixed(6)} ETH` : "--";
+  const fiatText = formatFiat((totalUsd || 0) * fx, currentCurrency);
+  if (totalMintedValueFiatEl) totalMintedValueFiatEl.textContent = fiatText;
+  const ethText = totalEth ? `${totalEth.toFixed(ETH_DISPLAY_DECIMALS)} ETH` : "0.000000 ETH";
+  if (totalMintedValueEthEl) totalMintedValueEthEl.textContent = ethText;
 }
 
 function setCurrency(currency) {
@@ -488,7 +512,7 @@ function loadMintHistoryForAddress(addr) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        mintedItems = parsed;
+        mintedItems = parsed.map(normalizeMintItem);
       }
     }
   } catch (err) {
@@ -502,7 +526,8 @@ function persistMintHistory() {
   const key = storageKeyForAddress(signerAddress);
   if (!key) return;
   try {
-    localStorage.setItem(key, JSON.stringify(mintedItems.slice(0, 50)));
+    const normalized = mintedItems.map(normalizeMintItem);
+    localStorage.setItem(key, JSON.stringify(normalized.slice(0, 50)));
   } catch (err) {
     console.warn("Failed to persist mint history", err);
   }
