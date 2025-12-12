@@ -681,13 +681,20 @@ input:focus {
 
 .footer-shell {
   display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 14px;
   background: var(--panel);
   border: 1px solid var(--outline);
   border-radius: 16px;
   padding: 18px;
+}
+
+.footer-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .footer-brand {
@@ -725,7 +732,7 @@ input:focus {
 
 .footer-bottom {
   text-align: center;
-  margin-top: 14px;
+  width: 100%;
 }
 
 @media (max-width: 900px) {
