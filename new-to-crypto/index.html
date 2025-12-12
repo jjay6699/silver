@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,37 +11,55 @@
 </head>
 <body>
   <div class="page">
-    <header class="nav">
-      <div class="nav-top">
-        <a class="logo" href="/">
-          <div class="mark">TP</div>
-          <div>
-            <div class="brand">The People's Co-operation</div>
-            <div class="tag">Silver-backed on ERC20</div>
+    <header class="site-header">
+      <div class="nav-shell">
+        <div class="nav-bar">
+          <div class="nav-left">
+            <a class="logo" href="/">
+              <div class="mark">TP</div>
+              <div>
+                <div class="brand">The People's Co-operation</div>
+                <div class="tag">Silver-backed on ERC20</div>
+              </div>
+            </a>
           </div>
-        </a>
-        <div class="nav-extras">
-          <div class="currency-toggle" role="group" aria-label="Select currency">
-            <button class="currency-btn active" data-currency="USD">USD</button>
-            <button class="currency-btn" data-currency="AUD">AUD</button>
+          <div class="nav-right">
+            <div class="nav-extras">
+              <div class="currency-toggle" role="group" aria-label="Select currency">
+                <button class="currency-btn active" data-currency="USD">USD</button>
+                <button class="currency-btn" data-currency="AUD">AUD</button>
+              </div>
+            </div>
+            <div class="nav-actions">
+              <button id="refreshPrice" class="ghost" onclick="window.location.href='/'">Refresh price</button>
+              <button id="connectWallet" class="primary" onclick="window.location.href='/'">Connect Wallet</button>
+            </div>
+            <button id="menuToggle" class="hamburger" aria-label="Open menu" aria-expanded="false">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
         </div>
-        <button id="menuToggle" class="hamburger" aria-label="Open menu" aria-expanded="false">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
-      <div class="nav-actions">
-        <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
-        <button id="refreshPrice" class="ghost">Refresh price</button>
-        <button class="primary" onclick="window.location.href='/'">Connect Wallet</button>
+        <div class="nav-sub">
+          <nav class="nav-links nav-links-sub" aria-label="Primary">
+            <a class="nav-link" href="/">Overview</a>
+            <a class="nav-link" href="/#mintModule">Mint</a>
+            <a class="nav-link" href="/#feed">Activity</a>
+            <a class="nav-link" href="/#info">Vault</a>
+            <a class="nav-link" href="/new-to-crypto/">New to Crypto?</a>
+          </nav>
+          <div class="nav-sub-aux">
+            <div class="eyebrow-badge">On-chain silver vault</div>
+            <div class="nav-subtext">Insured storage | 104% mint premium | Live pricing feeds</div>
+          </div>
+        </div>
       </div>
     </header>
 
     <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
       <div class="mobile-menu-panel">
-        <button id="closeMenu" class="close-menu" aria-label="Close menu">×</button>
+        <button id="closeMenu" class="close-menu" aria-label="Close menu">Close</button>
         <div class="mobile-menu-group">
           <div class="label">Currency</div>
           <div class="currency-toggle" role="group" aria-label="Select currency (mobile)">
@@ -50,10 +68,16 @@
           </div>
         </div>
         <div class="mobile-menu-group">
+          <a class="nav-link" href="/">Overview</a>
+          <a class="nav-link" href="/#mintModule">Mint</a>
+          <a class="nav-link" href="/#feed">Activity</a>
+          <a class="nav-link" href="/#info">Vault</a>
+        </div>
+        <div class="mobile-menu-group">
           <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
         </div>
         <div class="mobile-menu-group">
-          <button class="ghost wide" onclick="window.location.reload()">Refresh price</button>
+          <button id="refreshPriceMobile" class="ghost wide" onclick="window.location.href='/'">Refresh price</button>
         </div>
       </div>
     </div>
@@ -80,8 +104,8 @@
               <li>Download Bisq from <a href="https://bisq.network/downloads/" target="_blank" rel="noopener noreferrer">bisq.network/downloads</a> and verify signatures.</li>
               <li>Fund a trade: choose a payment rail (cash deposit, SEPA/ACH, etc.) and lock the required security deposit.</li>
               <li>Buy BTC P2P; wait for confirmations and release.</li>
-              <li>Swap BTC → ETH using a non-custodial option: Metamask’s built-in swap (open Metamask, tap “Swap”, select BTC source → ETH destination on the correct network) or a DEX that supports wrapped BTC → ETH (e.g., <a href="https://app.thorswap.finance/" target="_blank" rel="noopener noreferrer">ThorSwap</a> or <a href="https://app.sideshift.ai/" target="_blank" rel="noopener noreferrer">SideShift</a>—verify availability and routes).</li>
-              <li>(Optional) Bridge ETH to your target network via a reputable bridge (check your chain’s recommended bridge; examples include <a href="https://bridge.arbitrum.io/" target="_blank" rel="noopener noreferrer">Arbitrum</a>, <a href="https://bridge.optimism.io/" target="_blank" rel="noopener noreferrer">Optimism</a>).</li>
+              <li>Swap BTC to ETH using a non-custodial option: Metamask's built-in swap (open Metamask, tap "Swap", select BTC source and ETH destination on the correct network) or a DEX that supports wrapped BTC to ETH (e.g., <a href="https://app.thorswap.finance/" target="_blank" rel="noopener noreferrer">ThorSwap</a> or <a href="https://app.sideshift.ai/" target="_blank" rel="noopener noreferrer">SideShift</a>—verify availability and routes).</li>
+              <li>(Optional) Bridge ETH to your target network via a reputable bridge (check your chain's recommended bridge; examples include <a href="https://bridge.arbitrum.io/" target="_blank" rel="noopener noreferrer">Arbitrum</a>, <a href="https://bridge.optimism.io/" target="_blank" rel="noopener noreferrer">Optimism</a>).</li>
               <li>Send ETH to your Metamask address on the target network (keep some for gas).</li>
               <li>Return to the app and mint TPC.</li>
             </ol>
@@ -94,8 +118,8 @@
             <ul class="resources">
               <li><a href="https://bisq.network/downloads/" target="_blank" rel="noopener noreferrer">Bisq downloads</a></li>
               <li><a href="https://docs.bisq.network/getting-started" target="_blank" rel="noopener noreferrer">Bisq getting started guide</a></li>
-              <li><a href="https://app.thorswap.finance/" target="_blank" rel="noopener noreferrer">ThorSwap</a> · <a href="https://app.sideshift.ai/" target="_blank" rel="noopener noreferrer">SideShift</a></li>
-              <li><a href="https://bridge.arbitrum.io/" target="_blank" rel="noopener noreferrer">Arbitrum bridge</a> · <a href="https://bridge.optimism.io/" target="_blank" rel="noopener noreferrer">Optimism bridge</a></li>
+              <li><a href="https://app.thorswap.finance/" target="_blank" rel="noopener noreferrer">ThorSwap</a> • <a href="https://app.sideshift.ai/" target="_blank" rel="noopener noreferrer">SideShift</a></li>
+              <li><a href="https://bridge.arbitrum.io/" target="_blank" rel="noopener noreferrer">Arbitrum bridge</a> • <a href="https://bridge.optimism.io/" target="_blank" rel="noopener noreferrer">Optimism bridge</a></li>
             </ul>
           </div>
 
@@ -125,10 +149,41 @@
         </div>
       </section>
     </main>
+
     <footer class="footer">
-      © <span id="year"></span> The People's Co-operation. All rights reserved.
+      <div class="footer-shell">
+        <div class="footer-brand">
+          <div class="mark">TP</div>
+          <div>
+            <div class="brand">The People's Co-operation</div>
+            <div class="tag">Metal-backed digital assets</div>
+          </div>
+        </div>
+        <div class="footer-grid">
+          <div class="footer-column">
+            <div class="footer-heading">Product</div>
+            <a href="/#mintModule">Mint Silver</a>
+            <a href="/#feed">Recent Serials</a>
+            <a href="/#info">Vault Process</a>
+          </div>
+          <div class="footer-column">
+            <div class="footer-heading">Company</div>
+            <a href="/new-to-crypto/">New to Crypto?</a>
+            <a href="/terms">Terms & Conditions</a>
+            <a href="/privacy">Privacy</a>
+          </div>
+          <div class="footer-column">
+            <div class="footer-heading">Support</div>
+            <a href="mailto:support@peoplescooperation.com">support@peoplescooperation.com</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer">Twitter</a>
+            <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">&copy; <span id="year"></span> The People's Co-operation. All rights reserved.</div>
     </footer>
   </div>
+
   <script>
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
