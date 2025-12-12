@@ -457,6 +457,11 @@ button.wide {
   margin: 18px 0;
 }
 
+.input-header {
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
 label {
   color: var(--muted);
 }
