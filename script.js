@@ -413,11 +413,16 @@ function updateEthDisplay(slvrInputValue) {
   const slvr = slvrInputValue !== undefined ? Number(slvrInputValue) || 0 : Number(slvrInput.value) || 0;
   const ounces = slvr / 100;
   const usdValue = mintPriceUsd ? ounces * mintPriceUsd : null;
+  const fx = getFiatMultiplier();
+  const fiatValue = usdValue && fx ? usdValue * fx : null;
   if (!ethPrice || !usdValue) {
     ethValueEl.textContent = "-- ETH";
     return;
   }
-  const ethNeeded = usdValue / ethPrice;
+  const ethNeeded =
+    currentCurrency === "AUD"
+      ? fiatValue && fx ? (fiatValue / fx) / ethPrice : null
+      : usdValue / ethPrice;
   ethValueEl.textContent = `${ethNeeded.toFixed(ETH_DISPLAY_DECIMALS)} ETH`;
   if (ethValueLabelEl) ethValueLabelEl.textContent = `Live ETH/${currentCurrency}`;
 }
