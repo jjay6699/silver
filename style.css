@@ -710,13 +710,13 @@ input:focus {
 
 .footer-heading {
   color: var(--muted);
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
 .footer-column a {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .footer-column a:hover {
