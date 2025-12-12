@@ -429,7 +429,7 @@ function formatFiat(value, currency = currentCurrency) {
   const formatter = new Intl.NumberFormat(currency === "AUD" ? "en-AU" : "en-US", {
     style: "currency",
     currency,
-    currencyDisplay: currency === "AUD" ? "narrowSymbol" : "symbol",
+    currencyDisplay: "symbol",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
