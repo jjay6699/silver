@@ -25,6 +25,7 @@ const welcomeEl = document.getElementById("welcomeMessage");
 const mintAmountEl = document.getElementById("mintAmount");
 const usdValueEl = document.getElementById("usdValue");
 const ethValueEl = document.getElementById("ethValue");
+const spotFiatSubEl = document.getElementById("spotFiatSub");
 const slvrInput = document.getElementById("slvrInput");
 const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
@@ -443,6 +444,7 @@ function updateFiatDisplays() {
   const mint = mintPriceUsd * fx;
   spotEl.textContent = formatFiat(spot);
   mintEl.textContent = formatFiat(mint);
+  if (spotFiatSubEl) spotFiatSubEl.textContent = `Live per oz (${currentCurrency})`;
 }
 
 function updateMintTotals() {
