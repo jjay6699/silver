@@ -513,8 +513,8 @@ input:focus {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 12px;
-  align-items: end;
-  margin-top: 6px;
+  align-items: center;
+  margin-top: 0;
 }
 
 .cta-row.inline {
