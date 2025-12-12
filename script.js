@@ -425,12 +425,14 @@ function setMintBalanceText() {
 }
 
 function formatFiat(value, currency = currentCurrency) {
-  return new Intl.NumberFormat(currency === "AUD" ? "en-AU" : "en-US", {
+  const formatter = new Intl.NumberFormat(currency === "AUD" ? "en-AU" : "en-US", {
     style: "currency",
     currency,
+    currencyDisplay: currency === "AUD" ? "narrowSymbol" : "symbol",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value);
+  });
+  return formatter.format(value);
 }
 
 function updateFiatDisplays() {
