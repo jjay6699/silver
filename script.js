@@ -426,14 +426,12 @@ function setMintBalanceText() {
 }
 
 function formatFiat(value, currency = currentCurrency) {
-  const formatter = new Intl.NumberFormat(currency === "AUD" ? "en-AU" : "en-US", {
-    style: "currency",
-    currency,
-    currencyDisplay: "symbol",
+  const symbol = currency === "AUD" ? "A$" : "$";
+  const number = Number(value || 0).toLocaleString(currency === "AUD" ? "en-AU" : "en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return formatter.format(value);
+  return `${symbol}${number}`;
 }
 
 function updateFiatDisplays() {
