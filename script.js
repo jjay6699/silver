@@ -31,6 +31,9 @@ const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
 const walletEthBalanceEl = document.getElementById("walletEthBalance");
+const totalMintedAmountEl = document.getElementById("totalMintedAmount");
+const totalMintedValueFiatEl = document.getElementById("totalMintedValueFiat");
+const totalMintedValueEthEl = document.getElementById("totalMintedValueEth");
 const refreshBtnMobile = document.getElementById("refreshPriceMobile");
 const menuToggle = document.getElementById("menuToggle");
 const mobileMenu = document.getElementById("mobileMenu");
@@ -40,6 +43,7 @@ const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
 const MINT_BALANCE_OZ = 300;
+const ETH_DISPLAY_DECIMALS = 6;
 
 async function fetchSpotPrice() {
   try {
@@ -135,6 +139,7 @@ function recalcFromInput() {
   }
 
   updateEthDisplay(slvr);
+  updateMintTotals();
 }
 
 async function connectWallet() {
@@ -297,6 +302,8 @@ async function handleMint() {
     ounces: ounces.toFixed(2),
     slvr: slvr.toFixed(0),
     usd: formatFiat(usdValue * fx, currentCurrency),
+    usdRaw: usdValue,
+    ethRaw: ethNeeded,
     ts: new Date(),
   });
   persistMintHistory();
@@ -350,6 +357,7 @@ function renderMintFeed() {
   if (!container) return;
   if (!mintedItems.length) {
     container.innerHTML = `<div class="feed-item empty">No mints yet. Complete a mint to see a serial.</div>`;
+    updateMintTotals();
     return;
   }
   container.innerHTML = mintedItems
@@ -364,6 +372,7 @@ function renderMintFeed() {
     `
     )
     .join("");
+  updateMintTotals();
 }
 
 function setWelcomeText(addr) {
@@ -386,7 +395,7 @@ function updateEthDisplay(slvrInputValue) {
     return;
   }
   const ethNeeded = usdValue / ethPrice;
-  ethValueEl.textContent = `${ethNeeded.toFixed(5)} ETH`;
+  ethValueEl.textContent = `${ethNeeded.toFixed(ETH_DISPLAY_DECIMALS)} ETH`;
 }
 
 function setMintBalanceText() {
@@ -413,12 +422,32 @@ function updateFiatDisplays() {
   mintEl.textContent = formatFiat(mint);
 }
 
+function updateMintTotals() {
+  if (!totalMintedAmountEl && !totalMintedValueFiatEl && !totalMintedValueEthEl) return;
+  let totalOz = 0;
+  let totalUsd = 0;
+  let totalEth = 0;
+  mintedItems.forEach((item) => {
+    const oz = Number(item.ounces) || 0;
+    const usdRaw = Number(item.usdRaw);
+    const ethRaw = Number(item.ethRaw);
+    totalOz += oz;
+    if (Number.isFinite(usdRaw)) totalUsd += usdRaw;
+    if (Number.isFinite(ethRaw)) totalEth += ethRaw;
+  });
+  if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz ? `${totalOz.toFixed(2)} oz` : "--";
+  const fx = getFiatMultiplier();
+  if (totalMintedValueFiatEl) totalMintedValueFiatEl.textContent = totalUsd ? formatFiat(totalUsd * fx, currentCurrency) : formatFiat(0, currentCurrency);
+  if (totalMintedValueEthEl) totalMintedValueEthEl.textContent = totalEth ? `${totalEth.toFixed(6)} ETH` : "--";
+}
+
 function setCurrency(currency) {
   if (currency === currentCurrency) return;
   currentCurrency = currency;
   currencyButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.currency === currency));
   updateFiatDisplays();
   recalcFromInput();
+  updateMintTotals();
 }
 
 function toggleMenu() {
@@ -466,6 +495,7 @@ function loadMintHistoryForAddress(addr) {
     console.warn("Failed to load mint history", err);
   }
   renderMintFeed();
+  updateMintTotals();
 }
 
 function persistMintHistory() {
@@ -504,7 +534,7 @@ async function updateWalletBalance() {
   }
   try {
     const balance = await web3Provider.getBalance(signerAddress);
-    const formatted = Number(ethers.utils.formatEther(balance)).toFixed(4);
+    const formatted = Number(ethers.utils.formatEther(balance)).toFixed(ETH_DISPLAY_DECIMALS);
     setWalletBalanceText(formatted);
   } catch (err) {
     console.warn("Unable to fetch wallet balance", err.message);
@@ -514,5 +544,5 @@ async function updateWalletBalance() {
 
 function setWalletBalanceText(value) {
   if (!walletEthBalanceEl) return;
-  walletEthBalanceEl.textContent = value ? `${value} ETH` : "--";
+  walletEthBalanceEl.textContent = value ? `${Number(value).toFixed(ETH_DISPLAY_DECIMALS)} ETH` : "--";
 }
