@@ -513,18 +513,21 @@ input:focus {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 12px;
-  align-items: stretch;
+  align-items: end;
 }
 
 .cta-row.inline {
   margin-top: 0;
-  height: 100%;
-  align-items: stretch;
+  height: auto;
 }
 
 .cta-row.inline button {
-  height: 100%;
+  height: 56px;
   font-size: 16px;
+}
+
+.input-actions .input-wrap input {
+  height: 56px;
 }
 
 .hint {
