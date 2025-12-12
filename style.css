@@ -696,8 +696,8 @@ input:focus {
   gap: 18px;
   justify-content: space-between;
   flex-wrap: wrap;
-  padding-bottom: 12px;
-  padding-top: 4px;
+  padding-bottom: 14px;
+  padding-top: 10px;
   border-bottom: 1px solid var(--outline);
 }
 
