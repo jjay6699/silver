@@ -687,6 +687,7 @@ input:focus {
   border: 1px solid var(--outline);
   border-radius: 16px;
   padding: 18px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
 
 .footer-top {
@@ -695,6 +696,8 @@ input:focus {
   gap: 18px;
   justify-content: space-between;
   flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--outline);
 }
 
 .footer-brand {
