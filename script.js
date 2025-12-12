@@ -25,6 +25,7 @@ const welcomeEl = document.getElementById("welcomeMessage");
 const mintAmountEl = document.getElementById("mintAmount");
 const usdValueEl = document.getElementById("usdValue");
 const ethValueEl = document.getElementById("ethValue");
+const ethValueLabelEl = document.getElementById("ethValueLabel");
 const spotFiatSubEl = document.getElementById("spotFiatSub");
 const slvrInput = document.getElementById("slvrInput");
 const connectBtn = document.getElementById("connectWallet");
@@ -418,6 +419,7 @@ function updateEthDisplay(slvrInputValue) {
   }
   const ethNeeded = usdValue / ethPrice;
   ethValueEl.textContent = `${ethNeeded.toFixed(ETH_DISPLAY_DECIMALS)} ETH`;
+  if (ethValueLabelEl) ethValueLabelEl.textContent = `Live ETH/${currentCurrency}`;
 }
 
 function setMintBalanceText() {
