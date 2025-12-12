@@ -35,6 +35,8 @@ const mobileMenu = document.getElementById("mobileMenu");
 const closeMenuBtn = document.getElementById("closeMenu");
 const currencyButtons = document.querySelectorAll(".currency-btn");
 const fiatValueLabel = document.getElementById("fiatValueLabel");
+const hasPricingUI = Boolean(spotEl && mintEl);
+const hasMintForm = Boolean(slvrInput);
 const MINT_BALANCE_OZ = 300;
 
 async function fetchSpotPrice() {
@@ -57,9 +59,9 @@ async function fetchSpotPrice() {
 }
 
 async function hydratePrices() {
-  spotEl.textContent = "Loading...";
-  mintEl.textContent = "Loading...";
-  ethValueEl.textContent = "Loading...";
+  if (spotEl) spotEl.textContent = "Loading...";
+  if (mintEl) mintEl.textContent = "Loading...";
+  if (ethValueEl) ethValueEl.textContent = "Loading...";
   try {
     const [spot, fx] = await Promise.all([fetchSpotPrice(), fetchFxRates()]);
     spotPriceUsd = spot;
@@ -71,10 +73,10 @@ async function hydratePrices() {
     recalcFromInput();
   } catch (err) {
     console.error(err);
-    spotEl.textContent = "Feed unavailable";
-    mintEl.textContent = "--";
-    usdValueEl.textContent = "--";
-    ethValueEl.textContent = "--";
+    if (spotEl) spotEl.textContent = "Feed unavailable";
+    if (mintEl) mintEl.textContent = "--";
+    if (usdValueEl) usdValueEl.textContent = "--";
+    if (ethValueEl) ethValueEl.textContent = "--";
   }
 }
 
@@ -102,17 +104,18 @@ function getFiatMultiplier(currency = currentCurrency) {
 }
 
 function recalcFromInput() {
+  if (!slvrInput) return;
   const slvr = Number(slvrInput.value) || 0;
   const ounces = slvr / 100;
-  mintAmountEl.textContent = ounces ? `${ounces.toFixed(2)} oz` : "-- oz";
+  if (mintAmountEl) mintAmountEl.textContent = ounces ? `${ounces.toFixed(2)} oz` : "-- oz";
 
   const usdMintPrice = mintPriceUsd;
   const fx = getFiatMultiplier();
-  if (usdMintPrice && fx) {
+  if (usdMintPrice && fx && usdValueEl) {
     const usdValueBase = ounces * usdMintPrice;
     const fiatValue = usdValueBase * fx;
     usdValueEl.textContent = ounces ? formatFiat(fiatValue, currentCurrency) : formatFiat(0, currentCurrency);
-  } else {
+  } else if (usdValueEl) {
     usdValueEl.textContent = "--";
   }
 
@@ -193,14 +196,18 @@ function attachWalletListeners() {
 
 function updateWalletUI() {
   if (signerAddress) {
-    walletEl.textContent = shortenAddress(signerAddress);
-    connectBtn.textContent = shortenAddress(signerAddress);
-    connectBtn.disabled = true;
+    if (walletEl) walletEl.textContent = shortenAddress(signerAddress);
+    if (connectBtn) {
+      connectBtn.textContent = shortenAddress(signerAddress);
+      connectBtn.disabled = true;
+    }
     setWelcomeText(signerAddress);
   } else {
-    walletEl.textContent = "Not connected";
-    connectBtn.textContent = "Connect Wallet";
-    connectBtn.disabled = false;
+    if (walletEl) walletEl.textContent = "Not connected";
+    if (connectBtn) {
+      connectBtn.textContent = "Connect Wallet";
+      connectBtn.disabled = false;
+    }
     setWelcomeText(null);
   }
 }
@@ -276,10 +283,10 @@ async function handleMint() {
 }
 
 function bindEvents() {
-  slvrInput.addEventListener("input", recalcFromInput);
-  connectBtn.addEventListener("click", connectWallet);
-  mintBtn.addEventListener("click", handleMint);
-  refreshBtn.addEventListener("click", hydratePrices);
+  if (slvrInput) slvrInput.addEventListener("input", recalcFromInput);
+  if (connectBtn) connectBtn.addEventListener("click", connectWallet);
+  if (mintBtn) mintBtn.addEventListener("click", handleMint);
+  if (refreshBtn) refreshBtn.addEventListener("click", hydratePrices);
   if (refreshBtnMobile) refreshBtnMobile.addEventListener("click", () => { hydratePrices(); closeMenu(); });
   currencyButtons.forEach((btn) =>
     btn.addEventListener("click", () => {
@@ -297,17 +304,18 @@ function bindEvents() {
 
 (function init() {
   bindEvents();
-  hydratePrices();
-  recalcFromInput();
+  if (hasPricingUI || hasMintForm) {
+    hydratePrices();
+    recalcFromInput();
+    setMintBalanceText();
+    setInterval(hydratePrices, 60 * 1000);
+  }
   attachWalletListeners();
   attemptSilentWalletRestore();
   updateWalletUI();
   renderMintFeed();
-  setMintBalanceText();
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
-  // Auto-refresh pricing every 60 seconds
-  setInterval(hydratePrices, 60 * 1000);
 })();
 
 function buildSerial() {
@@ -318,6 +326,7 @@ function buildSerial() {
 
 function renderMintFeed() {
   const container = document.getElementById("mintFeed");
+  if (!container) return;
   if (!mintedItems.length) {
     container.innerHTML = `<div class="feed-item empty">No mints yet. Complete a mint to see a serial.</div>`;
     return;
@@ -346,6 +355,8 @@ function setWelcomeText(addr) {
 }
 
 function updateEthDisplay(slvrInputValue) {
+  if (!ethValueEl) return;
+  if (!slvrInput && slvrInputValue === undefined) return;
   const slvr = slvrInputValue !== undefined ? Number(slvrInputValue) || 0 : Number(slvrInput.value) || 0;
   const ounces = slvr / 100;
   const usdValue = mintPriceUsd ? ounces * mintPriceUsd : null;
@@ -374,7 +385,7 @@ function formatFiat(value, currency = currentCurrency) {
 function updateFiatDisplays() {
   if (fiatValueLabel) fiatValueLabel.textContent = `${currentCurrency} value`;
   const fx = getFiatMultiplier();
-  if (!spotPriceUsd || !mintPriceUsd || !fx) return;
+  if (!spotPriceUsd || !mintPriceUsd || !fx || !spotEl || !mintEl) return;
   const spot = spotPriceUsd * fx;
   const mint = mintPriceUsd * fx;
   spotEl.textContent = formatFiat(spot);

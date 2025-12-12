@@ -184,45 +184,7 @@
     </footer>
   </div>
 
-  <script>
-    const yearEl = document.getElementById("year");
-    if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-    (function initNav() {
-      const menuToggle = document.getElementById("menuToggle");
-      const mobileMenu = document.getElementById("mobileMenu");
-      const closeMenuBtn = document.getElementById("closeMenu");
-      const currencyButtons = document.querySelectorAll(".currency-btn");
-
-      const setCurrency = (currency) => {
-        currencyButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.currency === currency));
-      };
-
-      const openMenu = () => {
-        if (!mobileMenu || !menuToggle) return;
-        mobileMenu.classList.add("open");
-        menuToggle.setAttribute("aria-expanded", "true");
-      };
-
-      const closeMenu = () => {
-        if (!mobileMenu || !menuToggle) return;
-        mobileMenu.classList.remove("open");
-        menuToggle.setAttribute("aria-expanded", "false");
-      };
-
-      if (menuToggle) menuToggle.addEventListener("click", () => (mobileMenu?.classList.contains("open") ? closeMenu() : openMenu()));
-      if (closeMenuBtn) closeMenuBtn.addEventListener("click", closeMenu);
-      if (mobileMenu) {
-        mobileMenu.addEventListener("click", (e) => {
-          if (e.target === mobileMenu) closeMenu();
-        });
-      }
-      currencyButtons.forEach((btn) =>
-        btn.addEventListener("click", () => {
-          setCurrency(btn.dataset.currency);
-        })
-      );
-    })();
-  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.min.js" integrity="sha512-HO1+8d8q1yNi25A94ppIqh+apMI2vlA38nSxrdbidKdvUSsfx8bVsgcuyo6edSxnl2xe50Tzw9uQWGWpZ6YG8A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="/script.js"></script>
 </body>
 </html>
