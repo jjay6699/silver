@@ -63,13 +63,26 @@ async function hydratePrices() {
   if (mintEl) mintEl.textContent = "Loading...";
   if (ethValueEl) ethValueEl.textContent = "Loading...";
   try {
-    const [spot, fx] = await Promise.all([fetchSpotPrice(), fetchFxRates()]);
+    const spot = await fetchSpotPrice();
     spotPriceUsd = spot;
     mintPriceUsd = spotPriceUsd * 1.04;
-    audRate = fx;
-    ethPrice = await fetchEthPrice();
+
+    try {
+      audRate = await fetchFxRates();
+    } catch (fxErr) {
+      audRate = 1;
+      console.warn("FX feed unavailable, defaulting to USD rates only", fxErr.message);
+    }
+
+    try {
+      ethPrice = await fetchEthPrice();
+    } catch (ethErr) {
+      ethPrice = null;
+      console.warn("ETH feed unavailable", ethErr.message);
+    }
+
     updateFiatDisplays();
-    updateEthDisplay();
+    if (ethPrice) updateEthDisplay();
     recalcFromInput();
   } catch (err) {
     console.error(err);
@@ -99,7 +112,7 @@ async function fetchFxRates() {
 }
 
 function getFiatMultiplier(currency = currentCurrency) {
-  if (currency === "AUD") return audRate || null;
+  if (currency === "AUD") return audRate || 1;
   return 1;
 }
 
