@@ -509,6 +509,17 @@ input:focus {
   margin-top: 12px;
 }
 
+.input-actions {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.cta-row.inline {
+  margin-top: 0;
+}
+
 .hint {
   display: flex;
   align-items: center;
@@ -804,6 +815,9 @@ input:focus {
   }
   .cta-row {
     flex-direction: column;
+  }
+  .input-actions {
+    grid-template-columns: 1fr;
   }
   .nav-sub-aux .eyebrow-badge {
     display: none;
