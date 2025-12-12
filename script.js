@@ -1,6 +1,9 @@
 const SPOT_ENDPOINT_PRIMARY = "https://data-asg.goldprice.org/dbXRates/USD";
 const SPOT_ENDPOINT_FALLBACK = "https://api.metals.live/v1/spot/silver";
-const ETH_PRICE_ENDPOINT = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud";
+const ETH_PRICE_ENDPOINTS = [
+  "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud",
+  "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,AUD",
+];
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
@@ -107,13 +110,29 @@ async function hydratePrices() {
 }
 
 async function fetchEthPrice() {
-  const res = await fetch(ETH_PRICE_ENDPOINT, { cache: "no-cache" });
-  if (!res.ok) throw new Error("ETH price feed failed");
-  const data = await res.json();
-  const priceUsd = Number(data?.ethereum?.usd);
-  const priceAud = Number(data?.ethereum?.aud);
-  if (!Number.isFinite(priceUsd)) throw new Error("ETH price invalid");
-  return { usd: priceUsd, aud: Number.isFinite(priceAud) ? priceAud : null };
+  let lastError;
+  for (const url of ETH_PRICE_ENDPOINTS) {
+    try {
+      const res = await fetch(url, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      let priceUsd = null;
+      let priceAud = null;
+      if (data?.ethereum) {
+        priceUsd = Number(data.ethereum.usd);
+        priceAud = Number(data.ethereum.aud);
+      } else {
+        priceUsd = Number(data?.USD);
+        priceAud = Number(data?.AUD);
+      }
+      if (!Number.isFinite(priceUsd)) throw new Error("ETH price invalid");
+      return { usd: priceUsd, aud: Number.isFinite(priceAud) ? priceAud : null };
+    } catch (err) {
+      lastError = err;
+      console.warn(`ETH price endpoint failed (${url})`, err.message);
+    }
+  }
+  throw lastError || new Error("ETH price unavailable");
 }
 
 async function fetchFxRates() {
