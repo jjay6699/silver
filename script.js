@@ -16,6 +16,7 @@ let mintedItems = [];
 let ethPrice = null;
 let audRate = null; // AUD per 1 USD
 let currentCurrency = "USD";
+let web3Provider = null;
 
 const spotEl = document.getElementById("spotPrice");
 const mintEl = document.getElementById("mintPrice");
@@ -29,6 +30,7 @@ const connectBtn = document.getElementById("connectWallet");
 const mintBtn = document.getElementById("mintButton");
 const refreshBtn = document.getElementById("refreshPrice");
 const mintBalanceTopEl = document.getElementById("mintBalanceTop");
+const walletEthBalanceEl = document.getElementById("walletEthBalance");
 const refreshBtnMobile = document.getElementById("refreshPriceMobile");
 const menuToggle = document.getElementById("menuToggle");
 const mobileMenu = document.getElementById("mobileMenu");
@@ -142,11 +144,11 @@ async function connectWallet() {
   }
   try {
     await loadEthers();
-    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     connectBtn.disabled = false;
     let accounts = [];
     try {
-      accounts = await provider.send("eth_requestAccounts", []);
+      accounts = await web3Provider.send("eth_requestAccounts", []);
     } catch (primaryError) {
       // Fallback for some wallet providers
       accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -154,10 +156,11 @@ async function connectWallet() {
     const account = accounts?.[0];
     if (!account) throw new Error("No account returned");
     signerAddress = account;
+    await updateWalletBalance();
     loadMintHistoryForAddress(account);
     updateWalletUI();
     attachWalletListeners();
-    return provider.getSigner();
+    return web3Provider.getSigner();
   } catch (err) {
     console.error("Wallet connection cancelled", err);
     alert("Wallet connection failed or was dismissed. Please try again in Metamask.");
@@ -195,11 +198,14 @@ function attachWalletListeners() {
   window.ethereum.on("accountsChanged", (accounts) => {
     const account = accounts?.[0];
     signerAddress = account || null;
+    setWalletBalanceText(null);
+    updateWalletBalance();
     loadMintHistoryForAddress(account);
     updateWalletUI();
   });
   window.ethereum.on("disconnect", () => {
     signerAddress = null;
+    setWalletBalanceText(null);
     mintedItems = [];
     updateWalletUI();
     renderMintFeed();
@@ -214,6 +220,7 @@ function updateWalletUI() {
       connectBtn.textContent = shortenAddress(signerAddress);
       connectBtn.disabled = true;
     }
+    updateWalletBalance();
     setWelcomeText(signerAddress);
   } else {
     if (walletEl) walletEl.textContent = "Not connected";
@@ -221,6 +228,7 @@ function updateWalletUI() {
       connectBtn.textContent = "Connect Wallet";
       connectBtn.disabled = false;
     }
+    setWalletBalanceText(null);
     setWelcomeText(null);
   }
 }
@@ -257,8 +265,8 @@ async function handleMint() {
   }
 
   await loadEthers();
-  const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-  const signer = provider.getSigner();
+  web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+  const signer = web3Provider.getSigner();
 
   const ethToSend = ethers.utils.parseEther((ethNeeded || 0).toFixed(6));
   const balance = await signer.getBalance();
@@ -474,15 +482,37 @@ async function attemptSilentWalletRestore() {
   if (!window.ethereum) return;
   try {
     await loadEthers();
-    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    const accounts = await provider.send("eth_accounts", []);
+    web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    const accounts = await web3Provider.send("eth_accounts", []);
     const account = accounts?.[0];
     if (account) {
       signerAddress = account;
+      await updateWalletBalance();
       loadMintHistoryForAddress(account);
       updateWalletUI();
     }
   } catch (err) {
     console.warn("Silent wallet restore skipped", err.message);
   }
+}
+
+async function updateWalletBalance() {
+  if (!walletEthBalanceEl) return;
+  if (!signerAddress || !web3Provider) {
+    setWalletBalanceText(null);
+    return;
+  }
+  try {
+    const balance = await web3Provider.getBalance(signerAddress);
+    const formatted = Number(ethers.utils.formatEther(balance)).toFixed(4);
+    setWalletBalanceText(formatted);
+  } catch (err) {
+    console.warn("Unable to fetch wallet balance", err.message);
+    setWalletBalanceText(null);
+  }
+}
+
+function setWalletBalanceText(value) {
+  if (!walletEthBalanceEl) return;
+  walletEthBalanceEl.textContent = value ? `${value} ETH` : "--";
 }
