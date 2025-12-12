@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,43 +11,67 @@
 </head>
 <body>
   <div class="page">
-    <header class="nav">
-      <div class="nav-top">
-        <a class="logo" href="/">
-          <div class="mark">TP</div>
+    <header class="site-header">
+      <div class="nav-shell">
+        <div class="nav-bar">
+          <div class="nav-left">
+            <a class="logo" href="/">
+              <div class="mark">TP</div>
           <div>
             <div class="brand">The People's Co-operation</div>
             <div class="tag">Silver-backed on ERC20</div>
           </div>
         </a>
-        <div class="nav-extras">
-          <div class="currency-toggle" role="group" aria-label="Select currency">
-            <button class="currency-btn active" data-currency="USD">USD</button>
-            <button class="currency-btn" data-currency="AUD">AUD</button>
+          </div>
+          <div class="nav-right">
+            <div class="nav-extras">
+              <div class="currency-toggle" role="group" aria-label="Select currency">
+                <button class="currency-btn active" data-currency="USD">USD</button>
+                <button class="currency-btn" data-currency="AUD">AUD</button>
+              </div>
+            </div>
+            <div class="nav-actions">
+              <button id="refreshPrice" class="ghost">Refresh price</button>
+              <button id="connectWallet" class="primary">Connect Wallet</button>
+            </div>
+            <button id="menuToggle" class="hamburger" aria-label="Open menu" aria-expanded="false">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
         </div>
-        <button id="menuToggle" class="hamburger" aria-label="Open menu" aria-expanded="false">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
-      <div class="nav-actions">
-        <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
-        <button id="refreshPrice" class="ghost">Refresh price</button>
-        <button id="connectWallet" class="primary">Connect Wallet</button>
+        <div class="nav-sub">
+          <nav class="nav-links nav-links-sub" aria-label="Primary">
+            <a class="nav-link" href="#hero">Overview</a>
+            <a class="nav-link" href="#mintModule">Mint</a>
+            <a class="nav-link" href="#feed">Activity</a>
+            <a class="nav-link" href="#info">Vault</a>
+            <a class="nav-link" href="/new-to-crypto/">New to Crypto?</a>
+          </nav>
+          <div class="nav-sub-aux">
+            <div class="eyebrow-badge">On-chain silver vault</div>
+            <div class="nav-subtext">Insured storage | 104% mint premium | Live pricing feeds</div>
+          </div>
+        </div>
       </div>
     </header>
 
     <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
       <div class="mobile-menu-panel">
-        <button id="closeMenu" class="close-menu" aria-label="Close menu">×</button>
+        <button id="closeMenu" class="close-menu" aria-label="Close menu">Close</button>
         <div class="mobile-menu-group">
           <div class="label">Currency</div>
           <div class="currency-toggle" role="group" aria-label="Select currency (mobile)">
             <button class="currency-btn active" data-currency="USD">USD</button>
             <button class="currency-btn" data-currency="AUD">AUD</button>
           </div>
+        </div>
+        <div class="mobile-menu-group">
+          <a class="nav-link" href="#hero">Overview</a>
+          <a class="nav-link" href="#mintModule">Mint</a>
+          <a class="nav-link" href="#feed">Activity</a>
+          <a class="nav-link" href="#info">Vault</a>
         </div>
         <div class="mobile-menu-group">
           <a href="/new-to-crypto/" class="nav-link">New to Crypto?</a>
@@ -59,7 +83,7 @@
     </div>
 
     <main class="layout">
-      <section class="hero">
+      <section class="hero" id="hero">
         <div class="welcome" id="welcomeMessage">Welcome, connect your wallet</div>
         <div class="eyebrow">On-chain silver vault</div>
         <h1>Mint Silver with TPC</h1>
@@ -85,12 +109,12 @@
           <div class="stat-card">
             <div class="label">Wallet</div>
             <div class="value" id="walletStatus">Not connected</div>
-            <div class="sub">Metamask · ERC20</div>
+            <div class="sub">Metamask | ERC20</div>
           </div>
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="mintModule">
         <div class="panel-header">
           <div>
             <div class="label">Mint module</div>
@@ -142,7 +166,7 @@
         </div>
       </section>
 
-      <section class="feed">
+      <section class="feed" id="feed">
         <div class="feed-header">
           <div>
           <div class="label">Mint feed</div>
@@ -154,7 +178,7 @@
         </div>
       </section>
 
-      <section class="info">
+      <section class="info" id="info">
         <div class="info-card">
           <h3>Vaulted & auditable</h3>
           <p>Every TPC Token minted is backed by vaulted silver. Redemption requires a simple burn + ship request.</p>
@@ -171,7 +195,36 @@
 
     </main>
     <footer class="footer">
-      © <span id="year"></span> The People's Co-operation. All rights reserved.
+      <div class="footer-shell">
+        <div class="footer-brand">
+          <div class="mark">TP</div>
+          <div>
+            <div class="brand">The People's Co-operation</div>
+            <div class="tag">Metal-backed digital assets</div>
+          </div>
+        </div>
+        <div class="footer-grid">
+          <div class="footer-column">
+            <div class="footer-heading">Product</div>
+            <a href="#mintModule">Mint Silver</a>
+            <a href="#feed">Recent Serials</a>
+            <a href="#info">Vault Process</a>
+          </div>
+          <div class="footer-column">
+            <div class="footer-heading">Company</div>
+            <a href="/new-to-crypto/">New to Crypto?</a>
+            <a href="/terms">Terms & Conditions</a>
+            <a href="/privacy">Privacy</a>
+          </div>
+          <div class="footer-column">
+            <div class="footer-heading">Support</div>
+            <a href="mailto:support@peoplescooperation.com">support@peoplescooperation.com</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer">Twitter</a>
+            <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">&copy; <span id="year"></span> The People's Co-operation. All rights reserved.</div>
     </footer>
   </div>
 
