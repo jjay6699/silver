@@ -26,8 +26,8 @@
           <div class="nav-right">
             <div class="nav-extras">
               <div class="currency-toggle" role="group" aria-label="Select currency">
-                <button class="currency-btn active" data-currency="USD">USD</button>
-                <button class="currency-btn" data-currency="AUD">AUD</button>
+                <button class="currency-btn active" data-currency="AUD">AUD</button>
+                <button class="currency-btn" data-currency="USD">USD</button>
               </div>
             </div>
             <div class="nav-actions">
@@ -63,8 +63,8 @@
         <div class="mobile-menu-group">
           <div class="label">Currency</div>
           <div class="currency-toggle" role="group" aria-label="Select currency (mobile)">
-            <button class="currency-btn active" data-currency="USD">USD</button>
-            <button class="currency-btn" data-currency="AUD">AUD</button>
+            <button class="currency-btn active" data-currency="AUD">AUD</button>
+            <button class="currency-btn" data-currency="USD">USD</button>
           </div>
         </div>
         <div class="mobile-menu-group">
@@ -88,13 +88,13 @@
         <div class="eyebrow">On-chain silver vault</div>
         <h1>Mint Silver with TPC</h1>
         <p class="lede">
-          Purchase TPC Tokens backed by custom minted silver coins @ <span class="highlight">104% of coin creation cost</span>. All TPC silver coins are securely stored in a registered and insured facility to maintain a stable token price throughout all economic conditions. Every 1oz silver coin mints 100 x TPC Tokens.
+          Purchase TPC Tokens backed by real Fine Silver Coins. 1x TPC 1oz Silver Minted Coin = 100 TPC Tokens
         </p>
         <div class="stat-grid">
           <div class="stat-card">
             <div class="label">Spot Silver</div>
             <div class="value" id="spotPrice">$--</div>
-            <div class="sub" id="spotFiatSub">Live per oz (USD)</div>
+            <div class="sub" id="spotFiatSub">Live per oz (AUD)</div>
           </div>
           <div class="stat-card">
             <div class="label">Mint Price</div>
@@ -103,7 +103,7 @@
           </div>
           <div class="stat-card">
             <div class="label">Mint balance</div>
-            <div class="value" id="mintBalanceTop">-- oz</div>
+            <div class="value" id="mintBalanceTop">-- Coins</div>
             <div class="sub">Available to allocate</div>
           </div>
           <div class="stat-card">
@@ -123,8 +123,8 @@
           </div>
           <div class="stat-card">
             <div class="label">Total minted</div>
-            <div class="value" id="totalMintedAmount">--</div>
-            <div class="sub">Cumulative ounces</div>
+            <div class="value" id="totalMintedAmount">-- Coins</div>
+            <div class="sub">Cumulative Coins</div>
           </div>
           <div class="stat-card">
             <div class="label">Total minted value</div>
@@ -159,21 +159,21 @@
         <div class="summary">
           <div class="summary-item">
             <div class="label">You mint</div>
-            <div class="value" id="mintAmount">-- oz</div>
+            <div class="value" id="mintAmount">-- Coins</div>
             <div class="sub">Physical silver</div>
           </div>
           <div class="summary-item">
-            <div class="label" id="fiatValueLabel">USD value</div>
+            <div class="label" id="fiatValueLabel">AUD value</div>
             <div class="value" id="usdValue">$--</div>
             <div class="sub">At mint price</div>
           </div>
           <div class="summary-item">
             <div class="label">ETH to send</div>
             <div class="value" id="ethValue">-- ETH</div>
-            <div class="sub" id="ethValueLabel">Live ETH/USD</div>
+            <div class="sub" id="ethValueLabel">Live ETH/AUD</div>
           </div>
           <div class="summary-item">
-            <div class="label">Per oz premium</div>
+            <div class="label">Per coin premium</div>
             <div class="value">4%</div>
             <div class="sub">Fixed over spot</div>
           </div>
@@ -201,16 +201,20 @@
 
       <section class="info" id="info">
         <div class="info-card">
-          <h3>Vaulted & auditable</h3>
-          <p>Every TPC Token minted is backed by vaulted silver. Redemption requires a simple burn + ship request.</p>
+          <h3>Vaulted & Auditable</h3>
+          <p>
+            Every TPC Token minted is backed by vaulted silver. Live transaction feed and history to provide transparent documentation.
+            <br />
+            Note: Physical documentation available on request.
+          </p>
         </div>
         <div class="info-card">
           <h3>On-chain settlement</h3>
-          <p>Connect Metamask, approve SLVR spend, and sign the mint tx. We never take custody of your wallet keys.</p>
+          <p>Connect Wallet of choice, approve SLVR spend and sign mint tx (not sure what this means). We never take custody of your wallet keys.</p>
         </div>
         <div class="info-card">
-          <h3>Transparent and stable pricing</h3>
-          <p>We pull spot from multiple sources and lock a 4% premium per 1oz silver coin. Secure storage, transport and insurance are passed on at cost price (included in purchase price).</p>
+          <h3>Transparent & stable Pricing</h3>
+          <p>We pull spot from our suppliers site and lock a 4% premium on Silver Coin only. Storage, transport and documentation passed on at cost price (included in purchase price.)</p>
         </div>
       </section>
 

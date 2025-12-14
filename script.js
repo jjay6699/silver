@@ -19,7 +19,7 @@ let mintedItems = [];
 let ethPriceUsd = null;
 let ethPriceAud = null;
 let audRate = null; // AUD per 1 USD
-let currentCurrency = "USD";
+let currentCurrency = "AUD";
 let web3Provider = null;
 
 const spotEl = document.getElementById("spotPrice");
@@ -49,7 +49,7 @@ const currencyButtons = document.querySelectorAll(".currency-btn");
 const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
-const MINT_BALANCE_OZ = 300;
+const MINT_BALANCE_COINS = 300;
 const ETH_DISPLAY_DECIMALS = 6;
 
 async function fetchSpotPrice() {
@@ -152,15 +152,18 @@ function getFiatMultiplier(currency = currentCurrency) {
 function recalcFromInput() {
   if (!slvrInput) return;
   const slvr = Number(slvrInput.value) || 0;
-  const ounces = slvr / 100;
-  if (mintAmountEl) mintAmountEl.textContent = ounces ? `${ounces.toFixed(2)} oz` : "-- oz";
+  const coins = slvr / 100;
+  if (mintAmountEl) {
+    const label = coins === 1 ? "Coin" : "Coins";
+    mintAmountEl.textContent = coins ? `${coins.toFixed(2)} ${label}` : `-- ${label}`;
+  }
 
   const usdMintPrice = mintPriceUsd;
   const fx = getFiatMultiplier();
   if (usdMintPrice && fx && usdValueEl) {
-    const usdValueBase = ounces * usdMintPrice;
+    const usdValueBase = coins * mintPriceUsd;
     const fiatValue = usdValueBase * fx;
-    usdValueEl.textContent = ounces ? formatFiat(fiatValue, currentCurrency) : formatFiat(0, currentCurrency);
+    usdValueEl.textContent = coins ? formatFiat(fiatValue, currentCurrency) : formatFiat(0, currentCurrency);
   } else if (usdValueEl) {
     usdValueEl.textContent = "--";
   }
@@ -453,8 +456,9 @@ function updateEthDisplay(slvrInputValue) {
 }
 
 function setMintBalanceText() {
-  const text = `${MINT_BALANCE_OZ} oz`;
-  if (mintBalanceTopEl) mintBalanceTopEl.textContent = text;
+  if (!mintBalanceTopEl) return;
+  const suffix = MINT_BALANCE_COINS === 1 ? "Coin" : "Coins";
+  mintBalanceTopEl.textContent = `${MINT_BALANCE_COINS} ${suffix}`;
 }
 
 function formatFiat(value, currency = currentCurrency) {
@@ -491,8 +495,8 @@ function updateMintTotals() {
     if (Number.isFinite(usdRaw)) totalUsd += usdRaw;
     if (Number.isFinite(ethRaw)) totalEth += ethRaw;
   });
-  const ozText = `${totalOz.toFixed(2)} oz`;
-  if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz > 0 ? ozText : "0.00 oz";
+  const coinsText = `${totalOz.toFixed(2)} Coins`;
+  if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz > 0 ? coinsText : "0.00 Coins";
   const fx = getFiatMultiplier();
   const fiatText = formatFiat((totalUsd || 0) * fx, currentCurrency);
   if (totalMintedValueFiatEl) totalMintedValueFiatEl.textContent = fiatText;
