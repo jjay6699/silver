@@ -571,6 +571,11 @@ input:focus {
   margin-bottom: 8px;
 }
 
+.info-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .feed {
   background: var(--panel);
   border: 1px solid var(--outline);
