@@ -572,7 +572,7 @@ input:focus {
 }
 
 .info-card p {
-  color: var(--muted);
+  color: #b7c2dc;
   line-height: 1.5;
 }
 
