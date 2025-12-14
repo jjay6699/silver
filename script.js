@@ -1,10 +1,11 @@
-const SPOT_ENDPOINT_PRIMARY = "https://data-asg.goldprice.org/dbXRates/USD";
-const SPOT_ENDPOINT_FALLBACK = "https://api.metals.live/v1/spot/silver";
+const SBA_SILVER_PRICE_URL = "https://r.jina.ai/https://www.sbabullion.com.au/product/1oz-fine-silver-bullion-button/";
 const ETH_PRICE_ENDPOINTS = [
   "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud",
   "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,AUD",
 ];
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
+const PRICE_CACHE_KEY = "slvr_sba_price_cache";
+const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
@@ -14,6 +15,8 @@ const TREASURY_ADDRESS = "0xd85ca20db6e444e3b4c4b3c18a36fc45f7a66991";
 
 let spotPriceUsd = null;
 let mintPriceUsd = null;
+let spotPriceAud = null;
+let mintPriceAud = null;
 let signerAddress = null;
 let mintedItems = [];
 let ethPriceUsd = null;
@@ -52,40 +55,125 @@ const hasMintForm = Boolean(slvrInput);
 const MINT_BALANCE_COINS = 300;
 const ETH_DISPLAY_DECIMALS = 6;
 
-async function fetchSpotPrice() {
+function sbaUrlWithCacheBust() {
+  return `${SBA_SILVER_PRICE_URL}?ts=${Date.now()}`;
+}
+
+function withTimeout(promise, ms, label) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return promise(ctrl.signal)
+    .finally(() => clearTimeout(t))
+    .catch((err) => {
+      if (err.name === "AbortError") throw new Error(`${label} timed out`);
+      throw err;
+    });
+}
+
+async function fetchSbaSpotPriceAud() {
+  const res = await withTimeout(
+    (signal) => fetch(sbaUrlWithCacheBust(), { cache: "no-store", signal }),
+    8000,
+    "SBA price"
+  );
+  if (!res.ok) throw new Error(`SBA source failed (HTTP ${res.status})`);
+  const html = await res.text();
+  const parsed = parseSbaPrice(html);
+  if (!Number.isFinite(parsed)) throw new Error("Unable to parse SBA price");
+  return parsed;
+}
+
+function parseSbaPrice(html = "") {
+  const regexes = [
+    /Price-currencySymbol[^<]*<\/span>\s*([0-9][0-9.,]*)/i,
+    /\$\s*([0-9][0-9.,]*)/, // Jina text fallback
+  ];
+  for (const rx of regexes) {
+    const match = rx.exec(html);
+    if (match) {
+      const num = parsePriceText(match[1]);
+      if (Number.isFinite(num)) return num;
+    }
+  }
+  return null;
+}
+
+function parsePriceText(value) {
+  if (!value) return null;
+  const normalized = String(value).replace(/[^0-9.,]/g, "").replace(/,/g, "");
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : null;
+}
+
+function loadCachedPrices() {
   try {
-    const primary = await fetch(SPOT_ENDPOINT_PRIMARY, { cache: "no-cache" });
-    if (!primary.ok) throw new Error("Primary source failed");
-    const data = await primary.json();
-    const price = Number(data?.items?.[0]?.xagPrice);
-    if (!Number.isFinite(price)) throw new Error("Primary payload invalid");
-    return price;
+    const raw = localStorage.getItem(PRICE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (Date.now() - Number(parsed.ts || 0) > PRICE_CACHE_TTL_MS) return null;
+    return {
+      spotAud: Number(parsed.spotAud),
+      mintAud: Number(parsed.mintAud),
+      audRate: Number.isFinite(Number(parsed.audRate)) ? Number(parsed.audRate) : null,
+    };
   } catch (err) {
-    console.warn("Primary price feed failed, using fallback:", err.message);
-    const fallback = await fetch(SPOT_ENDPOINT_FALLBACK, { cache: "no-cache" });
-    if (!fallback.ok) throw new Error("Fallback source failed");
-    const data = await fallback.json();
-    const price = Number(data?.[0]?.price ?? data?.[1]?.silver ?? data?.[1]);
-    if (!Number.isFinite(price)) throw new Error("Fallback payload invalid");
-    return price;
+    console.warn("Price cache read failed", err.message);
+    return null;
+  }
+}
+
+function persistPrices(spotAud, mintAud, audRate) {
+  try {
+    const payload = {
+      spotAud,
+      mintAud,
+      audRate: Number.isFinite(audRate) ? audRate : null,
+      ts: Date.now(),
+    };
+    localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.warn("Price cache write failed", err.message);
   }
 }
 
 async function hydratePrices() {
-  if (spotEl) spotEl.textContent = "Loading...";
-  if (mintEl) mintEl.textContent = "Loading...";
-  if (ethValueEl) ethValueEl.textContent = "Loading...";
-  try {
-    const spot = await fetchSpotPrice();
-    spotPriceUsd = spot;
-    mintPriceUsd = spotPriceUsd * 1.04;
-
-    try {
-      audRate = await fetchFxRates();
-    } catch (fxErr) {
-      audRate = 1;
-      console.warn("FX feed unavailable, defaulting to USD rates only", fxErr.message);
+  const cached = loadCachedPrices();
+  const hasCachedPrices = cached && Number.isFinite(cached.spotAud) && Number.isFinite(cached.mintAud);
+  if (!hasCachedPrices) {
+    if (spotEl) spotEl.textContent = "Loading...";
+    if (mintEl) mintEl.textContent = "Loading...";
+    if (ethValueEl) ethValueEl.textContent = "Loading...";
+  } else {
+    spotPriceAud = cached.spotAud;
+    mintPriceAud = cached.mintAud;
+    if (Number.isFinite(cached.audRate)) {
+      audRate = cached.audRate;
+      spotPriceUsd = spotPriceAud / audRate;
+      mintPriceUsd = mintPriceAud / audRate;
     }
+    updateFiatDisplays();
+    recalcFromInput();
+  }
+  try {
+    const fxPromise = fetchFxRates().catch((fxErr) => {
+      console.warn("FX feed unavailable, USD display will be disabled", fxErr.message);
+      return null;
+    });
+
+    const spotAud = await fetchSbaSpotPriceAud();
+    spotPriceAud = spotAud;
+    mintPriceAud = spotAud * 1.04; // Apply requested 4% uplift on SBA rate
+
+    audRate = await fxPromise;
+    if (audRate) {
+      spotPriceUsd = spotPriceAud / audRate;
+      mintPriceUsd = mintPriceAud / audRate;
+    } else {
+      spotPriceUsd = null;
+      mintPriceUsd = null;
+    }
+    persistPrices(spotPriceAud, mintPriceAud, audRate);
 
     try {
       const { usd, aud } = await fetchEthPrice();
@@ -113,7 +201,11 @@ async function fetchEthPrice() {
   let lastError;
   for (const url of ETH_PRICE_ENDPOINTS) {
     try {
-      const res = await fetch(url, { cache: "no-cache" });
+      const res = await withTimeout(
+        (signal) => fetch(url, { cache: "no-store", signal }),
+        8000,
+        "ETH price"
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       let priceUsd = null;
@@ -136,7 +228,11 @@ async function fetchEthPrice() {
 }
 
 async function fetchFxRates() {
-  const res = await fetch(FX_ENDPOINT, { cache: "no-cache" });
+  const res = await withTimeout(
+    (signal) => fetch(FX_ENDPOINT, { cache: "no-store", signal }),
+    8000,
+    "FX rate"
+  );
   if (!res.ok) throw new Error("FX rate feed failed");
   const data = await res.json();
   const rate = Number(data?.rates?.AUD);
@@ -145,7 +241,7 @@ async function fetchFxRates() {
 }
 
 function getFiatMultiplier(currency = currentCurrency) {
-  if (currency === "AUD") return audRate || 1;
+  if (currency === "AUD") return audRate || null;
   return 1;
 }
 
@@ -160,10 +256,14 @@ function recalcFromInput() {
 
   const usdMintPrice = mintPriceUsd;
   const fx = getFiatMultiplier();
-  if (usdMintPrice && fx && usdValueEl) {
-    const usdValueBase = coins * mintPriceUsd;
-    const fiatValue = usdValueBase * fx;
-    usdValueEl.textContent = coins ? formatFiat(fiatValue, currentCurrency) : formatFiat(0, currentCurrency);
+  const effectiveMintPrice =
+    currentCurrency === "AUD"
+      ? mintPriceAud ?? (fx && usdMintPrice ? usdMintPrice * fx : null)
+      : usdMintPrice ?? (audRate && mintPriceAud ? mintPriceAud / audRate : null);
+
+  if (effectiveMintPrice && usdValueEl) {
+    const usdValueBase = coins * effectiveMintPrice;
+    usdValueEl.textContent = coins ? formatFiat(usdValueBase, currentCurrency) : formatFiat(0, currentCurrency);
   } else if (usdValueEl) {
     usdValueEl.textContent = "--";
   }
@@ -366,7 +466,7 @@ function bindEvents() {
     hydratePrices();
     recalcFromInput();
     setMintBalanceText();
-    setInterval(hydratePrices, 120 * 1000);
+    setInterval(hydratePrices, 60 * 60 * 1000);
   }
   attachWalletListeners();
   attemptSilentWalletRestore();
@@ -439,18 +539,18 @@ function updateEthDisplay(slvrInputValue) {
   if (!slvrInput && slvrInputValue === undefined) return;
   const slvr = slvrInputValue !== undefined ? Number(slvrInputValue) || 0 : Number(slvrInput.value) || 0;
   const ounces = slvr / 100;
-  const usdValue = mintPriceUsd ? ounces * mintPriceUsd : null;
-  const fx = getFiatMultiplier();
-  const fiatValue = usdValue && fx ? usdValue * fx : null;
+  const fx = audRate || null;
+  const pricePerOz =
+    currentCurrency === "AUD"
+      ? mintPriceAud ?? (fx && mintPriceUsd ? mintPriceUsd * fx : null)
+      : fx ? mintPriceAud / fx : null;
+  const fiatValue = pricePerOz ? ounces * pricePerOz : null;
   const ethPx = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
-  if (!ethPx || !usdValue) {
+  if (!ethPx || !fiatValue) {
     ethValueEl.textContent = "-- ETH";
     return;
   }
-  const ethNeeded =
-    currentCurrency === "AUD"
-      ? fiatValue && ethPx ? fiatValue / ethPx : usdValue / ethPx
-      : usdValue / ethPx;
+  const ethNeeded = fiatValue / ethPx;
   ethValueEl.textContent = `${ethNeeded.toFixed(ETH_DISPLAY_DECIMALS)} ETH`;
   if (ethValueLabelEl) ethValueLabelEl.textContent = `Live ETH/${currentCurrency}`;
 }
@@ -472,13 +572,29 @@ function formatFiat(value, currency = currentCurrency) {
 
 function updateFiatDisplays() {
   if (fiatValueLabel) fiatValueLabel.textContent = `${currentCurrency} value`;
-  const fx = getFiatMultiplier();
-  if (!spotPriceUsd || !mintPriceUsd || !fx || !spotEl || !mintEl) return;
-  const spot = spotPriceUsd * fx;
-  const mint = mintPriceUsd * fx;
-  spotEl.textContent = formatFiat(spot);
-  mintEl.textContent = formatFiat(mint);
-  if (spotFiatSubEl) spotFiatSubEl.textContent = `Live per oz (${currentCurrency})`;
+  if (!spotEl || !mintEl) return;
+
+  const fx = audRate || null;
+
+  let spot = null;
+  let mint = null;
+  if (currentCurrency === "AUD") {
+    spot = spotPriceAud ?? (fx && spotPriceUsd ? spotPriceUsd * fx : null);
+    mint = mintPriceAud ?? (fx && mintPriceUsd ? mintPriceUsd * fx : null);
+  } else {
+    spot = fx ? spotPriceAud / fx : null;
+    mint = fx ? mintPriceAud / fx : null;
+  }
+
+  if (Number.isFinite(spot) && Number.isFinite(mint)) {
+    spotEl.textContent = formatFiat(spot);
+    mintEl.textContent = formatFiat(mint);
+    if (spotFiatSubEl) spotFiatSubEl.textContent = `Live per oz (${currentCurrency})`;
+  } else {
+    spotEl.textContent = "--";
+    mintEl.textContent = "--";
+    if (spotFiatSubEl) spotFiatSubEl.textContent = "";
+  }
 }
 
 function updateMintTotals() {
@@ -498,7 +614,11 @@ function updateMintTotals() {
   const coinsText = `${totalOz.toFixed(2)} Coins`;
   if (totalMintedAmountEl) totalMintedAmountEl.textContent = totalOz > 0 ? coinsText : "0.00 Coins";
   const fx = getFiatMultiplier();
-  const fiatText = formatFiat((totalUsd || 0) * fx, currentCurrency);
+  const effectiveFx = currentCurrency === "AUD" ? fx : 1;
+  const fiatText =
+    currentCurrency === "AUD" && !effectiveFx
+      ? "--"
+      : formatFiat((totalUsd || 0) * (effectiveFx || 1), currentCurrency);
   if (totalMintedValueFiatEl) totalMintedValueFiatEl.textContent = fiatText;
   const ethText = totalEth ? `${totalEth.toFixed(ETH_DISPLAY_DECIMALS)} ETH` : "0.000000 ETH";
   if (totalMintedValueEthEl) totalMintedValueEthEl.textContent = ethText;
@@ -511,6 +631,7 @@ function setCurrency(currency) {
   updateFiatDisplays();
   recalcFromInput();
   updateMintTotals();
+  hydratePrices(); // force fresh fetch on currency switch to ensure USD/AUD reflect latest SBA quote
 }
 
 function toggleMenu() {
