@@ -137,8 +137,8 @@ function persistPrices(spotAud, mintAud, audRate) {
   }
 }
 
-async function hydratePrices() {
-  const cached = loadCachedPrices();
+async function hydratePrices(forceFresh = false) {
+  const cached = forceFresh ? null : loadCachedPrices();
   const hasCachedPrices = cached && Number.isFinite(cached.spotAud) && Number.isFinite(cached.mintAud);
   if (!hasCachedPrices) {
     if (spotEl) spotEl.textContent = "Loading...";
@@ -444,8 +444,8 @@ function bindEvents() {
   if (slvrInput) slvrInput.addEventListener("input", recalcFromInput);
   if (connectBtn) connectBtn.addEventListener("click", connectWallet);
   if (mintBtn) mintBtn.addEventListener("click", handleMint);
-  if (refreshBtn) refreshBtn.addEventListener("click", hydratePrices);
-  if (refreshBtnMobile) refreshBtnMobile.addEventListener("click", () => { hydratePrices(); closeMenu(); });
+  if (refreshBtn) refreshBtn.addEventListener("click", () => hydratePrices(true));
+  if (refreshBtnMobile) refreshBtnMobile.addEventListener("click", () => { hydratePrices(true); closeMenu(); });
   currencyButtons.forEach((btn) =>
     btn.addEventListener("click", () => {
       setCurrency(btn.dataset.currency);
@@ -463,7 +463,7 @@ function bindEvents() {
 (function init() {
   bindEvents();
   if (hasPricingUI || hasMintForm) {
-    hydratePrices();
+    hydratePrices(true);
     recalcFromInput();
     setMintBalanceText();
     setInterval(hydratePrices, 60 * 60 * 1000);
@@ -631,7 +631,7 @@ function setCurrency(currency) {
   updateFiatDisplays();
   recalcFromInput();
   updateMintTotals();
-  hydratePrices(); // force fresh fetch on currency switch to ensure USD/AUD reflect latest SBA quote
+  hydratePrices(true); // force fresh fetch on currency switch to ensure USD/AUD reflect latest SBA quote
 }
 
 function toggleMenu() {
