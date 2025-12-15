@@ -4,7 +4,7 @@ const ETH_PRICE_ENDPOINTS = [
   "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,AUD",
 ];
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
-const PRICE_CACHE_KEY = "slvr_sba_price_cache";
+const PRICE_CACHE_KEY = "slvr_sba_price_cache_v2"; // bump key to drop stale pricing
 const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
@@ -165,7 +165,8 @@ async function hydratePrices(forceFresh = false) {
 
     const spotAud = await fetchSbaSpotPriceAud();
     spotPriceAud = spotAud;
-    mintPriceAud = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$0.40
+    const mintAudRaw = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$0.40
+    mintPriceAud = Number(mintAudRaw.toFixed(4)); // keep precision for FX conversion
 
     audRate = await fxPromise;
     if (audRate) {
