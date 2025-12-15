@@ -54,6 +54,8 @@ const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
 const MINT_BALANCE_COINS = 300;
 const ETH_DISPLAY_DECIMALS = 6;
+const MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
+const MINT_FIXED_AUD = 0.4; // A$0.40 fixed add-on per oz
 
 function sbaUrlWithCacheBust() {
   return `${SBA_SILVER_PRICE_URL}?ts=${Date.now()}`;
@@ -163,7 +165,7 @@ async function hydratePrices(forceFresh = false) {
 
     const spotAud = await fetchSbaSpotPriceAud();
     spotPriceAud = spotAud;
-    mintPriceAud = spotAud * 1.04; // Apply requested 4% uplift on SBA rate
+    mintPriceAud = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$0.40
 
     audRate = await fxPromise;
     if (audRate) {
