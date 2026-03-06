@@ -52,10 +52,13 @@ const currencyButtons = document.querySelectorAll(".currency-btn");
 const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
-const MINT_BALANCE_COINS = 300;
+const MINT_BALANCE_COINS = 100;
+const SERIAL_MIN = 1;
+const SERIAL_MAX = MINT_BALANCE_COINS;
+const SERIAL_WIDTH = 11;
 const ETH_DISPLAY_DECIMALS = 6;
 const MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
-const MINT_FIXED_AUD = 0.4; // A$0.40 fixed add-on per oz
+const MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
 
 function sbaUrlWithCacheBust() {
   return `${SBA_SILVER_PRICE_URL}?ts=${Date.now()}`;
@@ -165,7 +168,7 @@ async function hydratePrices(forceFresh = false) {
 
     const spotAud = await fetchSbaSpotPriceAud();
     spotPriceAud = spotAud;
-    const mintAudRaw = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$0.40
+    const mintAudRaw = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$4.00
     mintPriceAud = Number(mintAudRaw.toFixed(4)); // keep precision for FX conversion
 
     audRate = await fxPromise;
@@ -402,6 +405,12 @@ async function handleMint() {
     return;
   }
 
+  const serial = buildSerial();
+  if (!serial) {
+    alert("No serials left. All serials from 00000000001 to 00000000100 have been allocated.");
+    return;
+  }
+
   await loadEthers();
   web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
   const signer = web3Provider.getSigner();
@@ -428,7 +437,6 @@ async function handleMint() {
   }
 
   // Demo-only mint record
-  const serial = buildSerial();
   const fx = getFiatMultiplier() || 1;
   mintedItems.unshift({
     serial,
@@ -480,9 +488,16 @@ function bindEvents() {
 })();
 
 function buildSerial() {
-  const now = Date.now();
-  const rand = Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
-  return `TPC-${now.toString(36).toUpperCase()}-${rand}`;
+  const used = new Set(
+    mintedItems
+      .map((item) => Number.parseInt(String(item?.serial || "").trim(), 10))
+      .filter((n) => Number.isInteger(n) && n >= SERIAL_MIN && n <= SERIAL_MAX)
+  );
+
+  for (let n = SERIAL_MIN; n <= SERIAL_MAX; n += 1) {
+    if (!used.has(n)) return String(n).padStart(SERIAL_WIDTH, "0");
+  }
+  return null;
 }
 
 function renderMintFeed() {
@@ -663,6 +678,13 @@ function storageKeyForAddress(addr) {
   return `slvr_mints_${addr.toLowerCase()}`;
 }
 
+function isValidSerial(serial) {
+  const text = String(serial || "").trim();
+  if (!/^\d{11}$/.test(text)) return false;
+  const value = Number.parseInt(text, 10);
+  return Number.isInteger(value) && value >= SERIAL_MIN && value <= SERIAL_MAX;
+}
+
 function loadMintHistoryForAddress(addr) {
   const key = storageKeyForAddress(addr);
   mintedItems = [];
@@ -675,7 +697,7 @@ function loadMintHistoryForAddress(addr) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        mintedItems = parsed.map(normalizeMintItem);
+        mintedItems = parsed.map(normalizeMintItem).filter((item) => isValidSerial(item.serial));
       }
     }
   } catch (err) {
