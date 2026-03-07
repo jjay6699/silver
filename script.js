@@ -7,6 +7,7 @@ const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const PRICE_CACHE_KEY = "slvr_sba_price_cache_v2"; // bump key to drop stale pricing
 const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const MINT_HISTORY_LIMIT = 50;
+const PREMIUM_CONFIG_TTL_MS = 5 * 60 * 1000;
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
@@ -58,8 +59,11 @@ const SERIAL_MIN = 1;
 const SERIAL_MAX = MINT_BALANCE_COINS;
 const SERIAL_WIDTH = 11;
 const ETH_DISPLAY_DECIMALS = 6;
-const MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
-const MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
+const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
+const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
+let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
+let mintFixedAud = DEFAULT_MINT_FIXED_AUD;
+let premiumConfigLoadedAt = 0;
 
 function getMintApiBase() {
   return window.location.origin;
@@ -81,6 +85,32 @@ async function saveMintItemToApi(addr, item) {
     body: JSON.stringify(item),
   });
   if (!res.ok) throw new Error(`Mint save API failed (${res.status})`);
+}
+
+async function fetchPremiumConfig(forceFresh = false) {
+  if (!forceFresh && Date.now() - premiumConfigLoadedAt < PREMIUM_CONFIG_TTL_MS) return;
+  try {
+    const res = await fetch(`${getMintApiBase()}/api/premium-config`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Premium config API failed (${res.status})`);
+    const data = await res.json();
+    const percent = Number(data?.premiumPercent);
+    const fixed = Number(data?.fixedAud);
+    if (Number.isFinite(percent) && percent >= 0 && percent <= 1) {
+      mintPercentPremium = percent;
+    } else {
+      mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
+    }
+    if (Number.isFinite(fixed) && fixed >= 0) {
+      mintFixedAud = fixed;
+    } else {
+      mintFixedAud = DEFAULT_MINT_FIXED_AUD;
+    }
+    premiumConfigLoadedAt = Date.now();
+  } catch (err) {
+    console.warn("Premium config unavailable, using defaults", err.message);
+    mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
+    mintFixedAud = DEFAULT_MINT_FIXED_AUD;
+  }
 }
 
 function sbaUrlWithCacheBust() {
@@ -166,6 +196,7 @@ function persistPrices(spotAud, mintAud, audRate) {
 }
 
 async function hydratePrices(forceFresh = false) {
+  await fetchPremiumConfig(forceFresh);
   const cached = forceFresh ? null : loadCachedPrices();
   const hasCachedPrices = cached && Number.isFinite(cached.spotAud) && Number.isFinite(cached.mintAud);
   if (!hasCachedPrices) {
@@ -191,7 +222,7 @@ async function hydratePrices(forceFresh = false) {
 
     const spotAud = await fetchSbaSpotPriceAud();
     spotPriceAud = spotAud;
-    const mintAudRaw = spotAud * (1 + MINT_PERCENT_PREMIUM) + MINT_FIXED_AUD; // SBA + 4% + A$4.00
+    const mintAudRaw = spotAud * (1 + mintPercentPremium) + mintFixedAud;
     mintPriceAud = Number(mintAudRaw.toFixed(4)); // keep precision for FX conversion
 
     audRate = await fxPromise;

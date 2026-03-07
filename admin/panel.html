@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <main class="card">
+    <div class="header-row">
+      <h1>Premium Settings</h1>
+      <button id="logoutBtn" type="button" class="ghost">Logout</button>
+    </div>
+    <p>Update the mint premium formula used in pricing.</p>
+    <form id="settingsForm">
+      <label>
+        Percent Premium
+        <input id="premiumPercent" type="number" min="0" max="1" step="0.0001" required />
+        <small>Use decimal format. Example: 0.04 = 4%</small>
+      </label>
+      <label>
+        Fixed AUD Add-on
+        <input id="fixedAud" type="number" min="0" max="10000" step="0.01" required />
+        <small>Fixed A$ amount added per oz.</small>
+      </label>
+      <button type="submit">Save Settings</button>
+      <div id="status" class="status" aria-live="polite"></div>
+    </form>
+  </main>
+  <script src="/admin/panel.js"></script>
+</body>
+</html>

@@ -16,6 +16,10 @@ copy .env.example .env
 
 - `PORT=5500`
 - `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/silver`
+- `ADMIN_USERNAME=admin1223`
+- `ADMIN_PASSWORD=K1Um]7f15q_r`
+- `DEFAULT_PREMIUM_PERCENT=0.04`
+- `DEFAULT_FIXED_AUD=4.0`
 
 ## 3) Start Postgres
 
@@ -34,7 +38,22 @@ Open `http://localhost:5500`.
 ## API
 
 - `GET /api/health`
+- `GET /api/premium-config`
 - `GET /api/mints/:walletAddress`
 - `POST /api/mints/:walletAddress`
+- `POST /api/admin/login`
+- `POST /api/admin/logout`
+- `GET /api/admin/premium-config` (auth required)
+- `POST /api/admin/premium-config` (auth required)
 
 Mint history is now stored in Postgres when API/DB is available. Frontend localStorage is still used as fallback cache.
+
+## Admin Panel
+
+- Login page: `/admin/login`
+- Protected panel: `/admin/panel`
+
+Use the admin panel to update:
+
+- Percent premium (decimal, e.g. `0.04` = 4%)
+- Fixed AUD add-on (e.g. `4.00`)

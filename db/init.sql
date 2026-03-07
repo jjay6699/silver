@@ -14,3 +14,9 @@ CREATE TABLE IF NOT EXISTS wallet_mints (
 
 CREATE INDEX IF NOT EXISTS idx_wallet_mints_wallet_created
   ON wallet_mints (wallet_address, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value_json JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>Admin Login</h1>
+    <p>Enter your admin credentials to continue.</p>
+    <form id="loginForm">
+      <label>
+        Username
+        <input id="username" name="username" autocomplete="username" required />
+      </label>
+      <label>
+        Password
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit">Sign In</button>
+      <div id="error" class="error" aria-live="polite"></div>
+    </form>
+  </main>
+  <script src="/admin/login.js"></script>
+</body>
+</html>
