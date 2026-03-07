@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Silver Admin</title>
+  <title>TPC Admin</title>
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="brand">Silver Admin</div>
+      <div class="brand">TPC Admin</div>
       <nav>
-        <a href="#pricing">Pricing</a>
-        <a href="#serials">Serial Inventory</a>
+        <a href="#pricing" data-view-link="pricing" class="active">Pricing</a>
+        <a href="#serials" data-view-link="serials">Serial Inventory</a>
       </nav>
       <button id="logoutBtn" type="button" class="ghost">Logout</button>
     </aside>
 
     <main class="content">
       <header class="topbar">
-        <h1>Control Panel</h1>
-        <p>Manage premium formula and serial inventory.</p>
+        <h1 id="viewTitle">Pricing</h1>
+        <p id="viewSubtitle">Manage premium formula.</p>
       </header>
 
-      <section id="pricing" class="panel">
+      <section id="pricing" class="panel" data-view-section="pricing">
         <h2>Premium Settings</h2>
         <form id="settingsForm" class="grid-form">
           <label>
@@ -40,7 +40,7 @@
         </form>
       </section>
 
-      <section id="serials" class="panel">
+      <section id="serials" class="panel hidden" data-view-section="serials">
         <h2>Serial Inventory</h2>
         <div class="stats">
           <div><strong id="activeTotal">0</strong><span>Active</span></div>
@@ -51,7 +51,7 @@
           <label>
             Serials (one per line)
             <textarea id="serialsInput" rows="12" placeholder="00000000001&#10;00000000002&#10;00000000003"></textarea>
-            <small>Only 11-digit serials are accepted.</small>
+            <small>Only 11-digit serials are accepted. This field shows saved available serials from database.</small>
           </label>
           <div class="row">
             <label class="inline">

@@ -1,4 +1,8 @@
 const statusEl = document.getElementById("status");
+const viewTitleEl = document.getElementById("viewTitle");
+const viewSubtitleEl = document.getElementById("viewSubtitle");
+const viewLinks = Array.from(document.querySelectorAll("[data-view-link]"));
+const viewSections = Array.from(document.querySelectorAll("[data-view-section]"));
 const settingsForm = document.getElementById("settingsForm");
 const premiumPercentEl = document.getElementById("premiumPercent");
 const fixedAudEl = document.getElementById("fixedAud");
@@ -25,6 +29,21 @@ function renderSummary(summary = {}) {
   activeTotalEl.textContent = Number(summary.activeTotal || 0);
   availableTotalEl.textContent = Number(summary.availableTotal || 0);
   allocatedTotalEl.textContent = Number(summary.allocatedTotal || 0);
+}
+
+function setView(view) {
+  const activeView = view === "serials" ? "serials" : "pricing";
+  viewLinks.forEach((link) => link.classList.toggle("active", link.dataset.viewLink === activeView));
+  viewSections.forEach((section) => {
+    section.classList.toggle("hidden", section.dataset.viewSection !== activeView);
+  });
+  if (activeView === "serials") {
+    viewTitleEl.textContent = "Serial Inventory";
+    viewSubtitleEl.textContent = "Manage and replace available mint serials.";
+  } else {
+    viewTitleEl.textContent = "Pricing";
+    viewSubtitleEl.textContent = "Manage premium formula.";
+  }
 }
 
 async function loadPremiumConfig() {
@@ -103,3 +122,18 @@ logoutBtn.addEventListener("click", async () => {
 Promise.all([loadPremiumConfig(), loadSerials()])
   .then(() => setStatus("Admin panel ready."))
   .catch((err) => setStatus(err.message));
+
+function applyViewFromHash() {
+  const hash = (window.location.hash || "").replace("#", "");
+  setView(hash === "serials" ? "serials" : "pricing");
+}
+
+viewLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    const view = link.dataset.viewLink === "serials" ? "serials" : "pricing";
+    setView(view);
+  });
+});
+
+window.addEventListener("hashchange", applyViewFromHash);
+applyViewFromHash();

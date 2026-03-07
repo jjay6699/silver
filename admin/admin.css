@@ -76,6 +76,11 @@ body {
   background: rgba(40, 66, 110, 0.35);
 }
 
+.sidebar a.active {
+  border-color: var(--line);
+  background: rgba(44, 193, 142, 0.15);
+}
+
 .content {
   padding: 28px;
 }
@@ -96,6 +101,10 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 18px;
+}
+
+.panel.hidden {
+  display: none;
 }
 
 .panel h2 {
