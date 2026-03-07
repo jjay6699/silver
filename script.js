@@ -6,6 +6,7 @@ const ETH_PRICE_ENDPOINTS = [
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const PRICE_CACHE_KEY = "slvr_sba_price_cache_v2"; // bump key to drop stale pricing
 const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const MINT_HISTORY_LIMIT = 50;
 const ETHERS_CDNS = [
   "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js",
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
@@ -59,6 +60,28 @@ const SERIAL_WIDTH = 11;
 const ETH_DISPLAY_DECIMALS = 6;
 const MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
 const MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
+
+function getMintApiBase() {
+  return window.location.origin;
+}
+
+async function fetchMintHistoryFromApi(addr) {
+  const url = `${getMintApiBase()}/api/mints/${encodeURIComponent(addr)}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Mint history API failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+async function saveMintItemToApi(addr, item) {
+  const url = `${getMintApiBase()}/api/mints/${encodeURIComponent(addr)}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) throw new Error(`Mint save API failed (${res.status})`);
+}
 
 function sbaUrlWithCacheBust() {
   return `${SBA_SILVER_PRICE_URL}?ts=${Date.now()}`;
@@ -298,7 +321,7 @@ async function connectWallet() {
     if (!account) throw new Error("No account returned");
     signerAddress = account;
     await updateWalletBalance();
-    loadMintHistoryForAddress(account);
+    await loadMintHistoryForAddress(account);
     updateWalletUI();
     attachWalletListeners();
     return web3Provider.getSigner();
@@ -398,9 +421,10 @@ async function handleMint() {
   }
 
   const usdValue = ounces * mintPriceUsd;
-  const ethNeeded = ethPrice ? usdValue / ethPrice : null;
+  const activeEthPrice = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
+  const ethNeeded = activeEthPrice ? usdValue / activeEthPrice : null;
 
-  if (!ethPrice) {
+  if (!activeEthPrice) {
     alert("ETH price unavailable. Please refresh price and try again.");
     return;
   }
@@ -447,7 +471,7 @@ async function handleMint() {
     ethRaw: ethNeeded,
     ts: new Date(),
   });
-  persistMintHistory();
+  await persistMintHistory();
   renderMintFeed();
 }
 
@@ -537,8 +561,9 @@ function normalizeMintItem(item = {}) {
     if (Number.isFinite(parsedUsd)) normalized.usdRaw = parsedUsd;
   }
   // Backfill ethRaw if missing and we have usdRaw + ethPrice
-  if (!Number.isFinite(Number(normalized.ethRaw)) && Number.isFinite(Number(normalized.usdRaw)) && Number.isFinite(ethPrice)) {
-    normalized.ethRaw = Number(normalized.usdRaw) / ethPrice;
+  const activeEthPrice = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
+  if (!Number.isFinite(Number(normalized.ethRaw)) && Number.isFinite(Number(normalized.usdRaw)) && Number.isFinite(activeEthPrice)) {
+    normalized.ethRaw = Number(normalized.usdRaw) / activeEthPrice;
   }
   return normalized;
 }
@@ -685,7 +710,7 @@ function isValidSerial(serial) {
   return Number.isInteger(value) && value >= SERIAL_MIN && value <= SERIAL_MAX;
 }
 
-function loadMintHistoryForAddress(addr) {
+async function loadMintHistoryForAddress(addr) {
   const key = storageKeyForAddress(addr);
   mintedItems = [];
   if (!key) {
@@ -693,11 +718,27 @@ function loadMintHistoryForAddress(addr) {
     return;
   }
   try {
+    const apiItems = await fetchMintHistoryFromApi(addr);
+    if (Array.isArray(apiItems)) {
+      mintedItems = apiItems.map(normalizeMintItem).filter((item) => isValidSerial(item.serial)).slice(0, MINT_HISTORY_LIMIT);
+      try {
+        localStorage.setItem(key, JSON.stringify(mintedItems));
+      } catch (storageErr) {
+        console.warn("Failed to update local mint cache", storageErr);
+      }
+      renderMintFeed();
+      updateMintTotals();
+      return;
+    }
+  } catch (apiErr) {
+    console.warn("Mint history API unavailable, using local cache", apiErr.message);
+  }
+  try {
     const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        mintedItems = parsed.map(normalizeMintItem).filter((item) => isValidSerial(item.serial));
+        mintedItems = parsed.map(normalizeMintItem).filter((item) => isValidSerial(item.serial)).slice(0, MINT_HISTORY_LIMIT);
       }
     }
   } catch (err) {
@@ -707,14 +748,21 @@ function loadMintHistoryForAddress(addr) {
   updateMintTotals();
 }
 
-function persistMintHistory() {
+async function persistMintHistory() {
   const key = storageKeyForAddress(signerAddress);
   if (!key) return;
   try {
-    const normalized = mintedItems.map(normalizeMintItem);
-    localStorage.setItem(key, JSON.stringify(normalized.slice(0, 50)));
+    const normalized = mintedItems.map(normalizeMintItem).slice(0, MINT_HISTORY_LIMIT);
+    localStorage.setItem(key, JSON.stringify(normalized));
   } catch (err) {
     console.warn("Failed to persist mint history", err);
+  }
+  if (!signerAddress || !mintedItems.length) return;
+  const latest = normalizeMintItem(mintedItems[0]);
+  try {
+    await saveMintItemToApi(signerAddress, latest);
+  } catch (err) {
+    console.warn("Failed to persist mint history to API", err.message);
   }
 }
 
@@ -728,7 +776,7 @@ async function attemptSilentWalletRestore() {
     if (account) {
       signerAddress = account;
       await updateWalletBalance();
-      loadMintHistoryForAddress(account);
+      await loadMintHistoryForAddress(account);
       updateWalletUI();
     }
   } catch (err) {
