@@ -26,7 +26,7 @@ function parseSerialTextarea(value) {
 }
 
 function renderSummary(summary = {}) {
-  activeTotalEl.textContent = Number(summary.activeTotal || 0);
+  activeTotalEl.textContent = Number(summary.totalActive ?? summary.activeTotal ?? 0);
   availableTotalEl.textContent = Number(summary.availableTotal || 0);
   allocatedTotalEl.textContent = Number(summary.allocatedTotal || 0);
 }

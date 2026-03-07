@@ -61,3 +61,8 @@ Use the admin panel to update:
 - Percent premium (decimal, e.g. `0.04` = 4%)
 - Fixed AUD add-on (e.g. `4.00`)
 - Serial inventory (11-digit serials, one per line)
+
+Default serial seed:
+
+- On first startup with empty `serial_inventory`, the app seeds `00000000001` to `00000000100`.
+- Mint allocation is sequential from the next available serial.

@@ -31,6 +31,7 @@ async function initDb() {
   const sqlPath = path.join(__dirname, "db", "init.sql");
   const sql = fs.readFileSync(sqlPath, "utf8");
   await pool.query(sql);
+  await ensureDefaultSerialInventory();
 }
 
 function parseCookies(header = "") {
@@ -142,6 +143,7 @@ async function writePremiumConfig(premiumPercent, fixedAud) {
 async function serialSummary() {
   const result = await pool.query(
     `SELECT
+      COUNT(*) FILTER (WHERE is_active = TRUE) AS total_active,
       COUNT(*) FILTER (WHERE is_active = TRUE) AS active_total,
       COUNT(*) FILTER (WHERE is_active = TRUE AND is_allocated = FALSE) AS available_total,
       COUNT(*) FILTER (WHERE is_allocated = TRUE) AS allocated_total
@@ -149,10 +151,23 @@ async function serialSummary() {
   );
   const row = result.rows?.[0] || {};
   return {
+    totalActive: Number(row.total_active || 0),
     activeTotal: Number(row.active_total || 0),
     availableTotal: Number(row.available_total || 0),
     allocatedTotal: Number(row.allocated_total || 0),
   };
+}
+
+async function ensureDefaultSerialInventory() {
+  const existing = await pool.query("SELECT COUNT(*)::int AS count FROM serial_inventory");
+  const count = Number(existing.rows?.[0]?.count || 0);
+  if (count > 0) return;
+
+  const defaults = [];
+  for (let i = 1; i <= 100; i += 1) {
+    defaults.push(String(i).padStart(11, "0"));
+  }
+  await upsertSerials(defaults, "replace");
 }
 
 async function upsertSerials(serials, mode = "replace") {
