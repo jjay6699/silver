@@ -13,7 +13,7 @@ const ETHERS_CDNS = [
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
   "https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js",
 ];
-const TREASURY_ADDRESS = "0xd85ca20db6e444e3b4c4b3c18a36fc45f7a66991";
+const TREASURY_ADDRESS = "0x3875FB22655D8bd72310E92c57407d741cF5C8B6";
 
 let spotPriceUsd = null;
 let mintPriceUsd = null;
