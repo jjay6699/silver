@@ -1,8 +1,15 @@
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
 COPY . .
-# Use envsubst to honor the PORT variable provided by Railway
-COPY default.conf.template /etc/nginx/templates/default.conf.template
+
+ENV NODE_ENV=production
 ENV PORT=8080
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+
+EXPOSE 8080
+
+CMD ["npm", "start"]
