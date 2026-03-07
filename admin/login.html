@@ -7,10 +7,12 @@
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <main class="card">
-    <h1>TPC Admin Login</h1>
-    <p>Enter your admin credentials to continue.</p>
-    <form id="loginForm">
+  <main class="card login-card">
+    <div class="login-brand" aria-label="TPC">
+      <img src="/logo.png" alt="TPC" class="login-logo" />
+    </div>
+    <p class="login-copy">Enter your admin credentials to continue.</p>
+    <form id="loginForm" class="login-form">
       <label>
         Username
         <input id="username" name="username" autocomplete="username" required />
@@ -19,7 +21,7 @@
         Password
         <input id="password" name="password" type="password" autocomplete="current-password" required />
       </label>
-      <button type="submit">Sign In</button>
+      <button type="submit" class="login-submit">Sign In</button>
       <div id="error" class="error" aria-live="polite"></div>
     </form>
   </main>
