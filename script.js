@@ -461,32 +461,35 @@ async function handleMint() {
   }
 
   const ounces = slvr / 100;
-  if (!mintPriceUsd) {
+  const fx = audRate || null;
+  const pricePerOz =
+    currentCurrency === "AUD"
+      ? mintPriceAud ?? (fx && mintPriceUsd ? mintPriceUsd * fx : null)
+      : mintPriceUsd ?? (fx && mintPriceAud ? mintPriceAud / fx : null);
+  const activeEthPrice =
+    currentCurrency === "AUD"
+      ? ethPriceAud ?? (fx && ethPriceUsd ? ethPriceUsd * fx : null)
+      : ethPriceUsd ?? (fx && ethPriceAud ? ethPriceAud / fx : null);
+
+  if (!pricePerOz) {
     alert("Mint price unavailable. Please refresh price and try again.");
     return;
   }
-
-  const usdValue = ounces * mintPriceUsd;
-  const activeEthPrice = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
-  const ethNeeded = activeEthPrice ? usdValue / activeEthPrice : null;
-
   if (!activeEthPrice) {
     alert("ETH price unavailable. Please refresh price and try again.");
     return;
   }
+  const fiatValue = ounces * pricePerOz;
+  const ethNeeded = fiatValue / activeEthPrice;
+  const usdUnitPrice = mintPriceUsd ?? (fx && mintPriceAud ? mintPriceAud / fx : null);
+  const usdValue =
+    usdUnitPrice ? ounces * usdUnitPrice : currentCurrency === "USD" ? fiatValue : fx ? fiatValue / fx : null;
 
   await loadEthers();
   web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
   const signer = web3Provider.getSigner();
 
   const ethToSend = ethers.utils.parseEther((ethNeeded || 0).toFixed(6));
-  const balance = await signer.getBalance();
-  if (balance.lt(ethToSend)) {
-    const needed = ethers.utils.formatEther(ethToSend);
-    const available = ethers.utils.formatEther(balance);
-    alert(`Insufficient ETH balance.\nNeeded: ${needed} ETH\nAvailable: ${Number(available).toFixed(6)} ETH`);
-    return;
-  }
 
   try {
     const tx = await signer.sendTransaction({
@@ -496,17 +499,21 @@ async function handleMint() {
     console.log("Tx submitted", tx.hash);
   } catch (err) {
     console.error("Transaction rejected or failed", err);
-    alert("Transaction was cancelled or failed. Please try again.");
+    const reason = String(err?.message || "").toLowerCase();
+    if (reason.includes("insufficient funds")) {
+      alert("Insufficient ETH (including gas) in wallet. Please top up and try again.");
+    } else {
+      alert("Transaction was cancelled or failed. Please try again.");
+    }
     return;
   }
 
   // Demo-only mint record
-  const fx = getFiatMultiplier() || 1;
   const payload = {
     ounces: ounces.toFixed(2),
     slvr: slvr.toFixed(0),
-    usd: formatFiat(usdValue * fx, currentCurrency),
-    usdRaw: usdValue,
+    usd: formatFiat(fiatValue, currentCurrency),
+    usdRaw: Number.isFinite(usdValue) ? usdValue : null,
     ethRaw: ethNeeded,
     ts: new Date(),
   };
@@ -596,10 +603,9 @@ function normalizeMintItem(item = {}) {
     const parsedUsd = parseFloat(normalized.usd.replace(/[^0-9.]+/g, ""));
     if (Number.isFinite(parsedUsd)) normalized.usdRaw = parsedUsd;
   }
-  // Backfill ethRaw if missing and we have usdRaw + ethPrice
-  const activeEthPrice = currentCurrency === "AUD" ? ethPriceAud || ethPriceUsd : ethPriceUsd;
-  if (!Number.isFinite(Number(normalized.ethRaw)) && Number.isFinite(Number(normalized.usdRaw)) && Number.isFinite(activeEthPrice)) {
-    normalized.ethRaw = Number(normalized.usdRaw) / activeEthPrice;
+  // Backfill ethRaw from USD value only against ETH/USD.
+  if (!Number.isFinite(Number(normalized.ethRaw)) && Number.isFinite(Number(normalized.usdRaw)) && Number.isFinite(ethPriceUsd)) {
+    normalized.ethRaw = Number(normalized.usdRaw) / ethPriceUsd;
   }
   return normalized;
 }
