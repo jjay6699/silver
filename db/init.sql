@@ -20,3 +20,16 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value_json JSONB NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS serial_inventory (
+  serial TEXT PRIMARY KEY,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_allocated BOOLEAN NOT NULL DEFAULT FALSE,
+  allocated_wallet TEXT,
+  allocated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_serial_inventory_available
+  ON serial_inventory (is_active, is_allocated, serial);

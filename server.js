@@ -25,6 +25,7 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
 const DEFAULT_PREMIUM_PERCENT = Number(process.env.DEFAULT_PREMIUM_PERCENT || 0.04);
 const DEFAULT_FIXED_AUD = Number(process.env.DEFAULT_FIXED_AUD || 4.0);
 const settingsCache = new Map();
+const SERIAL_PATTERN = /^\d{11}$/;
 
 async function initDb() {
   const sqlPath = path.join(__dirname, "db", "init.sql");
@@ -97,6 +98,22 @@ function validatePremiumConfig(percent, fixedAud) {
   return null;
 }
 
+function normalizeSerial(raw) {
+  return String(raw || "").trim();
+}
+
+function parseSerialInput(input = []) {
+  const seen = new Set();
+  return input
+    .map((value) => normalizeSerial(value))
+    .filter((serial) => SERIAL_PATTERN.test(serial))
+    .filter((serial) => {
+      if (seen.has(serial)) return false;
+      seen.add(serial);
+      return true;
+    });
+}
+
 async function readPremiumConfig() {
   try {
     const result = await pool.query("SELECT value_json FROM app_settings WHERE key = 'premium_config' LIMIT 1");
@@ -122,6 +139,55 @@ async function writePremiumConfig(premiumPercent, fixedAud) {
   );
 }
 
+async function serialSummary() {
+  const result = await pool.query(
+    `SELECT
+      COUNT(*) FILTER (WHERE is_active = TRUE) AS active_total,
+      COUNT(*) FILTER (WHERE is_active = TRUE AND is_allocated = FALSE) AS available_total,
+      COUNT(*) FILTER (WHERE is_allocated = TRUE) AS allocated_total
+     FROM serial_inventory`
+  );
+  const row = result.rows?.[0] || {};
+  return {
+    activeTotal: Number(row.active_total || 0),
+    availableTotal: Number(row.available_total || 0),
+    allocatedTotal: Number(row.allocated_total || 0),
+  };
+}
+
+async function upsertSerials(serials, mode = "replace") {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const serial of serials) {
+      await client.query(
+        `INSERT INTO serial_inventory (serial, is_active, updated_at)
+         VALUES ($1, TRUE, NOW())
+         ON CONFLICT (serial)
+         DO UPDATE SET is_active = TRUE, updated_at = NOW()`,
+        [serial]
+      );
+    }
+
+    if (mode === "replace") {
+      await client.query(
+        `UPDATE serial_inventory
+         SET is_active = FALSE, updated_at = NOW()
+         WHERE is_allocated = FALSE
+           AND serial <> ALL($1::text[])`,
+        [serials]
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 app.use(express.json({ limit: "256kb" }));
 
 app.get("/api/health", async (req, res) => {
@@ -136,6 +202,15 @@ app.get("/api/health", async (req, res) => {
 app.get("/api/premium-config", async (req, res) => {
   const config = await readPremiumConfig();
   res.json(config);
+});
+
+app.get("/api/serials/summary", async (req, res) => {
+  try {
+    const summary = await serialSummary();
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load serial summary" });
+  }
 });
 
 app.post("/api/admin/login", (req, res) => {
@@ -173,6 +248,35 @@ app.post("/api/admin/premium-config", requireAdmin, async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     return res.status(500).json({ error: "Failed to save premium config" });
+  }
+});
+
+app.get("/api/admin/serials", requireAdmin, async (req, res) => {
+  try {
+    const list = await pool.query(
+      `SELECT serial, is_active, is_allocated, allocated_wallet, allocated_at, updated_at
+       FROM serial_inventory
+       ORDER BY serial ASC
+       LIMIT 5000`
+    );
+    const summary = await serialSummary();
+    return res.json({ items: list.rows, summary });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to load serial inventory" });
+  }
+});
+
+app.post("/api/admin/serials", requireAdmin, async (req, res) => {
+  const mode = req.body?.mode === "append" ? "append" : "replace";
+  const serials = parseSerialInput(Array.isArray(req.body?.serials) ? req.body.serials : []);
+  if (!serials.length) return res.status(400).json({ error: "No valid serials supplied" });
+
+  try {
+    await upsertSerials(serials, mode);
+    const summary = await serialSummary();
+    return res.json({ ok: true, summary, accepted: serials.length, mode });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to save serial inventory" });
   }
 });
 
@@ -215,7 +319,6 @@ app.post("/api/mints/:walletAddress", async (req, res) => {
   }
 
   const body = req.body || {};
-  const serial = String(body.serial || "").trim();
   const ounces = Number(body.ounces);
   const slvr = Number(body.slvr);
   const usdText = body.usd == null ? null : String(body.usd);
@@ -223,9 +326,6 @@ app.post("/api/mints/:walletAddress", async (req, res) => {
   const ethRaw = body.ethRaw == null ? null : Number(body.ethRaw);
   const mintedAt = body.ts ? new Date(body.ts) : new Date();
 
-  if (!/^\d{11}$/.test(serial)) {
-    return res.status(400).json({ error: "Invalid serial" });
-  }
   if (!Number.isFinite(ounces) || ounces <= 0) {
     return res.status(400).json({ error: "Invalid ounces" });
   }
@@ -236,17 +336,58 @@ app.post("/api/mints/:walletAddress", async (req, res) => {
     return res.status(400).json({ error: "Invalid timestamp" });
   }
 
+  const client = await pool.connect();
   try {
-    await pool.query(
+    await client.query("BEGIN");
+    const serialRow = await client.query(
+      `SELECT serial
+       FROM serial_inventory
+       WHERE is_active = TRUE AND is_allocated = FALSE
+       ORDER BY serial ASC
+       LIMIT 1
+       FOR UPDATE SKIP LOCKED`
+    );
+    const serial = serialRow.rows?.[0]?.serial;
+    if (!serial) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "No serials available. Please contact admin." });
+    }
+
+    await client.query(
       `INSERT INTO wallet_mints (wallet_address, serial, ounces, slvr, usd_text, usd_raw, eth_raw, minted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT (wallet_address, serial) DO NOTHING`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [walletAddress, serial, ounces, slvr, usdText, usdRaw, ethRaw, mintedAt.toISOString()]
     );
 
-    return res.status(201).json({ ok: true });
+    await client.query(
+      `UPDATE serial_inventory
+       SET is_allocated = TRUE, allocated_wallet = $2, allocated_at = NOW(), updated_at = NOW()
+       WHERE serial = $1`,
+      [serial, walletAddress]
+    );
+    await client.query("COMMIT");
+
+    return res.status(201).json({
+      ok: true,
+      item: {
+        serial,
+        ounces: ounces.toFixed(2),
+        slvr: slvr.toFixed(0),
+        usd: usdText,
+        usdRaw,
+        ethRaw,
+        ts: mintedAt.toISOString(),
+      },
+    });
   } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {
+      // no-op
+    }
     return res.status(500).json({ error: "Failed to save mint" });
+  } finally {
+    client.release();
   }
 });
 

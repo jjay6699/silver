@@ -54,16 +54,13 @@ const currencyButtons = document.querySelectorAll(".currency-btn");
 const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
-const MINT_BALANCE_COINS = 100;
-const SERIAL_MIN = 1;
-const SERIAL_MAX = MINT_BALANCE_COINS;
-const SERIAL_WIDTH = 11;
 const ETH_DISPLAY_DECIMALS = 6;
 const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
 const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
 let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
 let mintFixedAud = DEFAULT_MINT_FIXED_AUD;
 let premiumConfigLoadedAt = 0;
+let availableSerials = null;
 
 function getMintApiBase() {
   return window.location.origin;
@@ -84,7 +81,24 @@ async function saveMintItemToApi(addr, item) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(item),
   });
-  if (!res.ok) throw new Error(`Mint save API failed (${res.status})`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || `Mint save API failed (${res.status})`);
+  return data?.item || null;
+}
+
+async function fetchSerialSummary() {
+  try {
+    const res = await fetch(`${getMintApiBase()}/api/serials/summary`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Serial summary failed (${res.status})`);
+    const data = await res.json();
+    const available = Number(data?.availableTotal);
+    if (Number.isFinite(available)) {
+      availableSerials = available;
+      setMintBalanceText();
+    }
+  } catch (err) {
+    console.warn("Serial summary unavailable", err.message);
+  }
 }
 
 async function fetchPremiumConfig(forceFresh = false) {
@@ -248,6 +262,7 @@ async function hydratePrices(forceFresh = false) {
     updateFiatDisplays();
     if (ethPriceUsd) updateEthDisplay();
     recalcFromInput();
+    fetchSerialSummary();
   } catch (err) {
     console.error(err);
     if (spotEl) spotEl.textContent = "Feed unavailable";
@@ -460,12 +475,6 @@ async function handleMint() {
     return;
   }
 
-  const serial = buildSerial();
-  if (!serial) {
-    alert("No serials left. All serials from 00000000001 to 00000000100 have been allocated.");
-    return;
-  }
-
   await loadEthers();
   web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
   const signer = web3Provider.getSigner();
@@ -493,16 +502,25 @@ async function handleMint() {
 
   // Demo-only mint record
   const fx = getFiatMultiplier() || 1;
-  mintedItems.unshift({
-    serial,
+  const payload = {
     ounces: ounces.toFixed(2),
     slvr: slvr.toFixed(0),
     usd: formatFiat(usdValue * fx, currentCurrency),
     usdRaw: usdValue,
     ethRaw: ethNeeded,
     ts: new Date(),
-  });
+  };
+  try {
+    const saved = await saveMintItemToApi(signerAddress, payload);
+    if (!saved?.serial) throw new Error("No serial returned by server");
+    mintedItems.unshift(normalizeMintItem(saved));
+  } catch (err) {
+    console.error("Failed to persist mint to server", err);
+    alert("Mint completed but failed to allocate/save serial. Please contact admin.");
+    return;
+  }
   await persistMintHistory();
+  fetchSerialSummary();
   renderMintFeed();
 }
 
@@ -541,19 +559,6 @@ function bindEvents() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 })();
-
-function buildSerial() {
-  const used = new Set(
-    mintedItems
-      .map((item) => Number.parseInt(String(item?.serial || "").trim(), 10))
-      .filter((n) => Number.isInteger(n) && n >= SERIAL_MIN && n <= SERIAL_MAX)
-  );
-
-  for (let n = SERIAL_MIN; n <= SERIAL_MAX; n += 1) {
-    if (!used.has(n)) return String(n).padStart(SERIAL_WIDTH, "0");
-  }
-  return null;
-}
 
 function renderMintFeed() {
   const container = document.getElementById("mintFeed");
@@ -631,8 +636,12 @@ function updateEthDisplay(slvrInputValue) {
 
 function setMintBalanceText() {
   if (!mintBalanceTopEl) return;
-  const suffix = MINT_BALANCE_COINS === 1 ? "Coin" : "Coins";
-  mintBalanceTopEl.textContent = `${MINT_BALANCE_COINS} ${suffix}`;
+  if (!Number.isFinite(availableSerials)) {
+    mintBalanceTopEl.textContent = "-- Coins";
+    return;
+  }
+  const suffix = availableSerials === 1 ? "Coin" : "Coins";
+  mintBalanceTopEl.textContent = `${availableSerials} ${suffix}`;
 }
 
 function formatFiat(value, currency = currentCurrency) {
@@ -736,9 +745,7 @@ function storageKeyForAddress(addr) {
 
 function isValidSerial(serial) {
   const text = String(serial || "").trim();
-  if (!/^\d{11}$/.test(text)) return false;
-  const value = Number.parseInt(text, 10);
-  return Number.isInteger(value) && value >= SERIAL_MIN && value <= SERIAL_MAX;
+  return /^\d{11}$/.test(text);
 }
 
 async function loadMintHistoryForAddress(addr) {
@@ -787,13 +794,6 @@ async function persistMintHistory() {
     localStorage.setItem(key, JSON.stringify(normalized));
   } catch (err) {
     console.warn("Failed to persist mint history", err);
-  }
-  if (!signerAddress || !mintedItems.length) return;
-  const latest = normalizeMintItem(mintedItems[0]);
-  try {
-    await saveMintItemToApi(signerAddress, latest);
-  } catch (err) {
-    console.warn("Failed to persist mint history to API", err.message);
   }
 }
 

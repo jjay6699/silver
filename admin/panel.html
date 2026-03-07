@@ -3,31 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel</title>
+  <title>Silver Admin</title>
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <main class="card">
-    <div class="header-row">
-      <h1>Premium Settings</h1>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">Silver Admin</div>
+      <nav>
+        <a href="#pricing">Pricing</a>
+        <a href="#serials">Serial Inventory</a>
+      </nav>
       <button id="logoutBtn" type="button" class="ghost">Logout</button>
-    </div>
-    <p>Update the mint premium formula used in pricing.</p>
-    <form id="settingsForm">
-      <label>
-        Percent Premium
-        <input id="premiumPercent" type="number" min="0" max="1" step="0.0001" required />
-        <small>Use decimal format. Example: 0.04 = 4%</small>
-      </label>
-      <label>
-        Fixed AUD Add-on
-        <input id="fixedAud" type="number" min="0" max="10000" step="0.01" required />
-        <small>Fixed A$ amount added per oz.</small>
-      </label>
-      <button type="submit">Save Settings</button>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h1>Control Panel</h1>
+        <p>Manage premium formula and serial inventory.</p>
+      </header>
+
+      <section id="pricing" class="panel">
+        <h2>Premium Settings</h2>
+        <form id="settingsForm" class="grid-form">
+          <label>
+            Percent Premium
+            <input id="premiumPercent" type="number" min="0" max="1" step="0.0001" required />
+            <small>Decimal format, e.g. 0.04 = 4%</small>
+          </label>
+          <label>
+            Fixed AUD Add-on
+            <input id="fixedAud" type="number" min="0" max="10000" step="0.01" required />
+            <small>Fixed amount in A$ per oz</small>
+          </label>
+          <button type="submit">Save Premium</button>
+        </form>
+      </section>
+
+      <section id="serials" class="panel">
+        <h2>Serial Inventory</h2>
+        <div class="stats">
+          <div><strong id="activeTotal">0</strong><span>Active</span></div>
+          <div><strong id="availableTotal">0</strong><span>Available</span></div>
+          <div><strong id="allocatedTotal">0</strong><span>Allocated</span></div>
+        </div>
+        <form id="serialsForm">
+          <label>
+            Serials (one per line)
+            <textarea id="serialsInput" rows="12" placeholder="00000000001&#10;00000000002&#10;00000000003"></textarea>
+            <small>Only 11-digit serials are accepted.</small>
+          </label>
+          <div class="row">
+            <label class="inline">
+              <input id="replaceMode" type="checkbox" checked />
+              Replace current unallocated list
+            </label>
+            <button type="submit">Save Serials</button>
+          </div>
+        </form>
+      </section>
+
       <div id="status" class="status" aria-live="polite"></div>
-    </form>
-  </main>
+    </main>
+  </div>
+
   <script src="/admin/panel.js"></script>
 </body>
 </html>
