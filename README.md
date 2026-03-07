@@ -48,6 +48,7 @@ Open `http://localhost:5500`.
 - `POST /api/admin/premium-config` (auth required)
 - `GET /api/admin/serials` (auth required)
 - `POST /api/admin/serials` (auth required)
+- `GET /api/admin/mints` (auth required)
 
 Mint history is now stored in Postgres when API/DB is available. Frontend localStorage is still used as fallback cache.
 

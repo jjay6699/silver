@@ -295,6 +295,29 @@ app.post("/api/admin/serials", requireAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/admin/mints", requireAdmin, async (req, res) => {
+  const limitRaw = Number(req.query?.limit || 200);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(1000, Math.trunc(limitRaw))) : 200;
+  try {
+    const [rowsResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT wallet_address, serial, ounces, slvr, usd_text, usd_raw, eth_raw, minted_at, created_at
+         FROM wallet_mints
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [limit]
+      ),
+      pool.query("SELECT COUNT(*)::int AS total FROM wallet_mints"),
+    ]);
+    return res.json({
+      total: Number(countResult.rows?.[0]?.total || 0),
+      items: rowsResult.rows,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to load mint history" });
+  }
+});
+
 app.get("/api/mints/:walletAddress", async (req, res) => {
   const walletAddress = String(req.params.walletAddress || "").trim().toLowerCase();
   if (!/^0x[a-f0-9]{40}$/.test(walletAddress)) {

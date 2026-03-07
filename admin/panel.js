@@ -12,6 +12,10 @@ const replaceModeEl = document.getElementById("replaceMode");
 const activeTotalEl = document.getElementById("activeTotal");
 const availableTotalEl = document.getElementById("availableTotal");
 const allocatedTotalEl = document.getElementById("allocatedTotal");
+const refreshMintsBtn = document.getElementById("refreshMintsBtn");
+const mintRowsCountEl = document.getElementById("mintRowsCount");
+const mintTotalCountEl = document.getElementById("mintTotalCount");
+const mintsTableBodyEl = document.getElementById("mintsTableBody");
 const logoutBtn = document.getElementById("logoutBtn");
 
 function setStatus(message) {
@@ -32,7 +36,7 @@ function renderSummary(summary = {}) {
 }
 
 function setView(view) {
-  const activeView = view === "serials" ? "serials" : "pricing";
+  const activeView = view === "serials" || view === "mints" ? view : "pricing";
   viewLinks.forEach((link) => link.classList.toggle("active", link.dataset.viewLink === activeView));
   viewSections.forEach((section) => {
     section.classList.toggle("hidden", section.dataset.viewSection !== activeView);
@@ -40,6 +44,10 @@ function setView(view) {
   if (activeView === "serials") {
     viewTitleEl.textContent = "Serial Inventory";
     viewSubtitleEl.textContent = "Manage and replace available mint serials.";
+  } else if (activeView === "mints") {
+    viewTitleEl.textContent = "Mint History";
+    viewSubtitleEl.textContent = "Review all minted records.";
+    loadMintHistory().catch((err) => setStatus(err.message));
   } else {
     viewTitleEl.textContent = "Pricing";
     viewSubtitleEl.textContent = "Manage premium formula.";
@@ -69,6 +77,52 @@ async function loadSerials() {
   const available = (data.items || []).filter((item) => item.is_active && !item.is_allocated).map((item) => item.serial);
   serialsInputEl.value = available.join("\n");
   renderSummary(data.summary);
+}
+
+function shortWallet(addr) {
+  const text = String(addr || "");
+  if (text.length < 12) return text;
+  return `${text.slice(0, 8)}...${text.slice(-6)}`;
+}
+
+function formatDate(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "--";
+  return d.toLocaleString();
+}
+
+async function loadMintHistory() {
+  const res = await fetch("/api/admin/mints?limit=250", { cache: "no-store" });
+  if (res.status === 401) {
+    window.location.href = "/admin/login";
+    return;
+  }
+  if (!res.ok) throw new Error("Unable to load mint history");
+  const data = await res.json();
+  const items = Array.isArray(data.items) ? data.items : [];
+  mintRowsCountEl.textContent = String(items.length);
+  mintTotalCountEl.textContent = String(Number(data.total || 0));
+
+  if (!items.length) {
+    mintsTableBodyEl.innerHTML = `<tr><td colspan="6">No mints yet.</td></tr>`;
+    return;
+  }
+
+  mintsTableBodyEl.innerHTML = items
+    .map((item) => {
+      const value = item.usd_text || (Number.isFinite(Number(item.usd_raw)) ? `$${Number(item.usd_raw).toFixed(2)}` : "--");
+      return `
+        <tr>
+          <td>${formatDate(item.minted_at || item.created_at)}</td>
+          <td title="${String(item.wallet_address || "")}">${shortWallet(item.wallet_address)}</td>
+          <td>${String(item.serial || "")}</td>
+          <td>${Number(item.ounces || 0).toFixed(2)}</td>
+          <td>${Number(item.slvr || 0).toFixed(0)}</td>
+          <td>${value}</td>
+        </tr>
+      `;
+    })
+    .join("");
 }
 
 settingsForm.addEventListener("submit", async (e) => {
@@ -119,13 +173,23 @@ logoutBtn.addEventListener("click", async () => {
   window.location.href = "/admin/login";
 });
 
+refreshMintsBtn?.addEventListener("click", async () => {
+  setStatus("Refreshing mint history...");
+  try {
+    await loadMintHistory();
+    setStatus("Mint history refreshed.");
+  } catch (err) {
+    setStatus(err.message);
+  }
+});
+
 Promise.all([loadPremiumConfig(), loadSerials()])
   .then(() => setStatus("Admin panel ready."))
   .catch((err) => setStatus(err.message));
 
 function applyViewFromHash() {
   const hash = (window.location.hash || "").replace("#", "");
-  setView(hash === "serials" ? "serials" : "pricing");
+  setView(hash === "serials" || hash === "mints" ? hash : "pricing");
 }
 
 viewLinks.forEach((link) => {

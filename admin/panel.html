@@ -15,6 +15,7 @@
       <nav>
         <a href="#pricing" data-view-link="pricing" class="active">Pricing</a>
         <a href="#serials" data-view-link="serials">Serial Inventory</a>
+        <a href="#mints" data-view-link="mints">Mint History</a>
       </nav>
       <button id="logoutBtn" type="button" class="ghost">Logout</button>
     </aside>
@@ -64,6 +65,31 @@
               <button type="submit">Save Serials</button>
             </div>
           </form>
+        </section>
+
+        <section id="mints" class="panel hidden" data-view-section="mints">
+          <div class="panel-head">
+            <h2>Mint History</h2>
+            <button id="refreshMintsBtn" type="button" class="ghost">Refresh</button>
+          </div>
+          <div class="mint-meta">Showing latest <span id="mintRowsCount">0</span> records. Total mints: <span id="mintTotalCount">0</span>.</div>
+          <div class="table-wrap">
+            <table class="mint-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Wallet</th>
+                  <th>Serial</th>
+                  <th>Oz</th>
+                  <th>TPC</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="mintsTableBody">
+                <tr><td colspan="6">No mints yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <div id="status" class="status" aria-live="polite"></div>
