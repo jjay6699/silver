@@ -9,7 +9,9 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="brand">TPC Admin</div>
+      <a class="brand" href="/" aria-label="TPC Home">
+        <img src="/logo.png" alt="TPC" class="brand-logo" />
+      </a>
       <nav>
         <a href="#pricing" data-view-link="pricing" class="active">Pricing</a>
         <a href="#serials" data-view-link="serials">Serial Inventory</a>
@@ -18,52 +20,54 @@
     </aside>
 
     <main class="content">
-      <header class="topbar">
-        <h1 id="viewTitle">Pricing</h1>
-        <p id="viewSubtitle">Manage premium formula.</p>
-      </header>
+      <div class="content-inner">
+        <header class="topbar">
+          <h1 id="viewTitle">Pricing</h1>
+          <p id="viewSubtitle">Manage premium formula.</p>
+        </header>
 
-      <section id="pricing" class="panel" data-view-section="pricing">
-        <h2>Premium Settings</h2>
-        <form id="settingsForm" class="grid-form">
-          <label>
-            Percent Premium
-            <input id="premiumPercent" type="number" min="0" max="1" step="0.0001" required />
-            <small>Decimal format, e.g. 0.04 = 4%</small>
-          </label>
-          <label>
-            Fixed AUD Add-on
-            <input id="fixedAud" type="number" min="0" max="10000" step="0.01" required />
-            <small>Fixed amount in A$ per oz</small>
-          </label>
-          <button type="submit">Save Premium</button>
-        </form>
-      </section>
-
-      <section id="serials" class="panel hidden" data-view-section="serials">
-        <h2>Serial Inventory</h2>
-        <div class="stats">
-          <div><strong id="activeTotal">0</strong><span>Total Serials</span></div>
-          <div><strong id="availableTotal">0</strong><span>Available</span></div>
-          <div><strong id="allocatedTotal">0</strong><span>Allocated</span></div>
-        </div>
-        <form id="serialsForm">
-          <label>
-            Serials (one per line)
-            <textarea id="serialsInput" rows="12" placeholder="00000000001&#10;00000000002&#10;00000000003"></textarea>
-            <small>Only 11-digit serials are accepted. This field shows saved available serials from database.</small>
-          </label>
-          <div class="row">
-            <label class="inline">
-              <input id="replaceMode" type="checkbox" checked />
-              Replace current unallocated list
+        <section id="pricing" class="panel" data-view-section="pricing">
+          <h2>Premium Settings</h2>
+          <form id="settingsForm" class="grid-form">
+            <label>
+              Percent Premium
+              <input id="premiumPercent" type="number" min="0" max="1" step="0.0001" required />
+              <small>Decimal format, e.g. 0.04 = 4%</small>
             </label>
-            <button type="submit">Save Serials</button>
-          </div>
-        </form>
-      </section>
+            <label>
+              Fixed AUD Add-on
+              <input id="fixedAud" type="number" min="0" max="10000" step="0.01" required />
+              <small>Fixed amount in A$ per oz</small>
+            </label>
+            <button type="submit">Save Premium</button>
+          </form>
+        </section>
 
-      <div id="status" class="status" aria-live="polite"></div>
+        <section id="serials" class="panel hidden" data-view-section="serials">
+          <h2>Serial Inventory</h2>
+          <div class="stats">
+            <div><strong id="activeTotal">0</strong><span>Total Serials</span></div>
+            <div><strong id="availableTotal">0</strong><span>Available</span></div>
+            <div><strong id="allocatedTotal">0</strong><span>Allocated</span></div>
+          </div>
+          <form id="serialsForm">
+            <label>
+              Serials (one per line)
+              <textarea id="serialsInput" rows="12" placeholder="00000000001&#10;00000000002&#10;00000000003"></textarea>
+              <small>Only 11-digit serials are accepted. This field shows saved available serials from database.</small>
+            </label>
+            <div class="row">
+              <label class="inline">
+                <input id="replaceMode" type="checkbox" checked />
+                Replace current unallocated list
+              </label>
+              <button type="submit">Save Serials</button>
+            </div>
+          </form>
+        </section>
+
+        <div id="status" class="status" aria-live="polite"></div>
+      </div>
     </main>
   </div>
 

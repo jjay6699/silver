@@ -52,9 +52,16 @@ body {
 }
 
 .brand {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-logo {
+  display: block;
+  width: 120px;
+  height: auto;
+  object-fit: contain;
 }
 
 .sidebar nav {
@@ -83,6 +90,11 @@ body {
 
 .content {
   padding: 28px;
+}
+
+.content-inner {
+  width: 100%;
+  max-width: 980px;
 }
 
 .topbar h1 {
@@ -237,6 +249,10 @@ button.ghost {
 
   .content {
     padding: 14px;
+  }
+
+  .content-inner {
+    max-width: 100%;
   }
 
   .grid-form {
