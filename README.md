@@ -15,7 +15,7 @@ copy .env.example .env
 `.env` defaults:
 
 - `PORT=5500`
-- `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/silver`
+- `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/silver`
 - `ADMIN_USERNAME=admin1223`
 - `ADMIN_PASSWORD=K1Um]7f15q_r`
 - `DEFAULT_PREMIUM_PERCENT=0.04`

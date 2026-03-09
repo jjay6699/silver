@@ -1,10 +1,10 @@
-const SBA_SILVER_PRICE_URL = "https://r.jina.ai/https://www.sbabullion.com.au/product/1oz-fine-silver-bullion-button/";
+const ABC_SILVER_PRICE_URL = "https://r.jina.ai/http://www.abcbullion.com.au/";
 const ETH_PRICE_ENDPOINTS = [
   "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud",
   "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,AUD",
 ];
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
-const PRICE_CACHE_KEY = "slvr_sba_price_cache_v2"; // bump key to drop stale pricing
+const PRICE_CACHE_KEY = "slvr_abc_price_cache_v2"; // bump key to drop stale pricing
 const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const MINT_HISTORY_LIMIT = 50;
 const PREMIUM_CONFIG_TTL_MS = 5 * 60 * 1000;
@@ -55,8 +55,10 @@ const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
 const ETH_DISPLAY_DECIMALS = 6;
-const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% over SBA
-const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed add-on per oz
+const DISPLAY_SPOT_PERCENT_PREMIUM = 0.2; // 20% over ABC spot
+const DISPLAY_SPOT_FIXED_AUD = 8.5; // A$8.50 fixed add-on per oz
+const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over displayed spot
+const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed maintenance add-on per oz
 let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
 let mintFixedAud = DEFAULT_MINT_FIXED_AUD;
 let premiumConfigLoadedAt = 0;
@@ -127,8 +129,8 @@ async function fetchPremiumConfig(forceFresh = false) {
   }
 }
 
-function sbaUrlWithCacheBust() {
-  return `${SBA_SILVER_PRICE_URL}?ts=${Date.now()}`;
+function abcUrlWithCacheBust() {
+  return `${ABC_SILVER_PRICE_URL}?ts=${Date.now()}`;
 }
 
 function withTimeout(promise, ms, label) {
@@ -142,23 +144,23 @@ function withTimeout(promise, ms, label) {
     });
 }
 
-async function fetchSbaSpotPriceAud() {
+async function fetchAbcSpotPriceAud() {
   const res = await withTimeout(
-    (signal) => fetch(sbaUrlWithCacheBust(), { cache: "no-store", signal }),
+    (signal) => fetch(abcUrlWithCacheBust(), { cache: "no-store", signal }),
     8000,
-    "SBA price"
+    "ABC price"
   );
-  if (!res.ok) throw new Error(`SBA source failed (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`ABC source failed (HTTP ${res.status})`);
   const html = await res.text();
-  const parsed = parseSbaPrice(html);
-  if (!Number.isFinite(parsed)) throw new Error("Unable to parse SBA price");
+  const parsed = parseAbcPrice(html);
+  if (!Number.isFinite(parsed)) throw new Error("Unable to parse ABC silver price");
   return parsed;
 }
 
-function parseSbaPrice(html = "") {
+function parseAbcPrice(html = "") {
   const regexes = [
-    /Price-currencySymbol[^<]*<\/span>\s*([0-9][0-9.,]*)/i,
-    /\$\s*([0-9][0-9.,]*)/, // Jina text fallback
+    /\[BUY SILVER\]\(https?:\/\/www\.abcbullion\.com\.au\/store\/silver[^\n]*\)\s*\n+\[([0-9][0-9,]*\.[0-9]{2})\/oz\]\(https?:\/\/www\.abcbullion\.com\.au\/store\/silver/i,
+    /BUY\s+SILVER[\s\S]{0,120}?([0-9][0-9,]*\.[0-9]{2})\s*\/oz/i,
   ];
   for (const rx of regexes) {
     const match = rx.exec(html);
@@ -234,9 +236,10 @@ async function hydratePrices(forceFresh = false) {
       return null;
     });
 
-    const spotAud = await fetchSbaSpotPriceAud();
-    spotPriceAud = spotAud;
-    const mintAudRaw = spotAud * (1 + mintPercentPremium) + mintFixedAud;
+    const abcSpotAud = await fetchAbcSpotPriceAud();
+    const spotAud = abcSpotAud * (1 + DISPLAY_SPOT_PERCENT_PREMIUM) + DISPLAY_SPOT_FIXED_AUD;
+    spotPriceAud = Number(spotAud.toFixed(4));
+    const mintAudRaw = spotPriceAud * (1 + mintPercentPremium) + mintFixedAud;
     mintPriceAud = Number(mintAudRaw.toFixed(4)); // keep precision for FX conversion
 
     audRate = await fxPromise;
@@ -720,7 +723,7 @@ function setCurrency(currency) {
   updateFiatDisplays();
   recalcFromInput();
   updateMintTotals();
-  hydratePrices(true); // force fresh fetch on currency switch to ensure USD/AUD reflect latest SBA quote
+  hydratePrices(true); // force fresh fetch on currency switch to ensure USD/AUD reflect latest ABC quote
 }
 
 function toggleMenu() {
