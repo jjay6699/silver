@@ -16,10 +16,7 @@ copy .env.example .env
 
 - `PORT=5500`
 - `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/silver`
-- `ADMIN_USERNAME=admin1223`
-- `ADMIN_PASSWORD=K1Um]7f15q_r`
-- `DEFAULT_PREMIUM_PERCENT=0.04`
-- `DEFAULT_FIXED_AUD=4.0`
+
 
 ## 3) Start Postgres
 
