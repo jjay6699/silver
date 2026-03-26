@@ -59,6 +59,7 @@ const DISPLAY_SPOT_PERCENT_PREMIUM = 0.2; // 20% over ABC spot
 const DISPLAY_SPOT_FIXED_AUD = 8.5; // A$8.50 fixed add-on per oz
 const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over displayed spot
 const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed maintenance add-on per oz
+const TPC_PER_COIN = 1000;
 let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
 let mintFixedAud = DEFAULT_MINT_FIXED_AUD;
 let premiumConfigLoadedAt = 0;
@@ -326,7 +327,7 @@ function getFiatMultiplier(currency = currentCurrency) {
 function recalcFromInput() {
   if (!slvrInput) return;
   const slvr = Number(slvrInput.value) || 0;
-  const coins = slvr / 100;
+  const coins = slvr / TPC_PER_COIN;
   if (mintAmountEl) {
     const label = coins === 1 ? "Coin" : "Coins";
     mintAmountEl.textContent = coins ? `${coins.toFixed(2)} ${label}` : `-- ${label}`;
@@ -463,7 +464,7 @@ async function handleMint() {
     return;
   }
 
-  const ounces = slvr / 100;
+  const ounces = slvr / TPC_PER_COIN;
   const fx = audRate || null;
   const pricePerOz =
     currentCurrency === "AUD"
@@ -599,7 +600,7 @@ function normalizeMintItem(item = {}) {
   const slvr = Number(normalized.slvr);
   // Backfill ounces if missing
   if (!Number.isFinite(oz) && Number.isFinite(slvr)) {
-    normalized.ounces = (slvr / 100).toFixed(2);
+    normalized.ounces = (slvr / TPC_PER_COIN).toFixed(2);
   }
   // Backfill usdRaw from formatted string if missing
   if (!Number.isFinite(Number(normalized.usdRaw)) && typeof normalized.usd === "string") {
@@ -626,7 +627,7 @@ function updateEthDisplay(slvrInputValue) {
   if (!ethValueEl) return;
   if (!slvrInput && slvrInputValue === undefined) return;
   const slvr = slvrInputValue !== undefined ? Number(slvrInputValue) || 0 : Number(slvrInput.value) || 0;
-  const ounces = slvr / 100;
+  const ounces = slvr / TPC_PER_COIN;
   const fx = audRate || null;
   const pricePerOz =
     currentCurrency === "AUD"
@@ -650,7 +651,7 @@ function setMintBalanceText() {
     return;
   }
   const suffix = availableSerials === 1 ? "Coin" : "Coins";
-  mintBalanceTopEl.textContent = `${availableSerials} ${suffix}`;
+  mintBalanceTopEl.textContent = `${availableSerials.toLocaleString("en-US")} ${suffix}`;
 }
 
 function formatFiat(value, currency = currentCurrency) {
@@ -696,7 +697,7 @@ function updateMintTotals() {
   let totalEth = 0;
   mintedItems.forEach((rawItem) => {
     const item = normalizeMintItem(rawItem);
-    const oz = Number(item.ounces) || (Number(item.slvr) || 0) / 100 || 0;
+    const oz = Number(item.ounces) || (Number(item.slvr) || 0) / TPC_PER_COIN || 0;
     const usdRaw = Number(item.usdRaw);
     const ethRaw = Number(item.ethRaw);
     totalOz += oz;

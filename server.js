@@ -24,6 +24,7 @@ const SESSION_COOKIE = "slvr_admin_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
 const DEFAULT_PREMIUM_PERCENT = Number(process.env.DEFAULT_PREMIUM_PERCENT || 0.04);
 const DEFAULT_FIXED_AUD = Number(process.env.DEFAULT_FIXED_AUD || 4.0);
+const DEFAULT_SERIAL_INVENTORY_COUNT = 30000;
 const settingsCache = new Map();
 const SERIAL_PATTERN = /^\d{11}$/;
 
@@ -161,13 +162,13 @@ async function serialSummary() {
 async function ensureDefaultSerialInventory() {
   const existing = await pool.query("SELECT COUNT(*)::int AS count FROM serial_inventory");
   const count = Number(existing.rows?.[0]?.count || 0);
-  if (count > 0) return;
+  if (count >= DEFAULT_SERIAL_INVENTORY_COUNT) return;
 
   const defaults = [];
-  for (let i = 1; i <= 100; i += 1) {
+  for (let i = 1; i <= DEFAULT_SERIAL_INVENTORY_COUNT; i += 1) {
     defaults.push(String(i).padStart(11, "0"));
   }
-  await upsertSerials(defaults, "replace");
+  await upsertSerials(defaults, count > 0 ? "append" : "replace");
 }
 
 async function upsertSerials(serials, mode = "replace") {
