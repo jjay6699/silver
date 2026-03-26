@@ -160,9 +160,15 @@ async function serialSummary() {
 }
 
 async function ensureDefaultSerialInventory() {
-  const existing = await pool.query("SELECT COUNT(*)::int AS count FROM serial_inventory");
+  const existing = await pool.query(
+    `SELECT
+      COUNT(*)::int AS count,
+      COUNT(*) FILTER (WHERE is_active = TRUE)::int AS active_count
+     FROM serial_inventory`
+  );
   const count = Number(existing.rows?.[0]?.count || 0);
-  if (count >= DEFAULT_SERIAL_INVENTORY_COUNT) return;
+  const activeCount = Number(existing.rows?.[0]?.active_count || 0);
+  if (activeCount >= DEFAULT_SERIAL_INVENTORY_COUNT) return;
 
   const defaults = [];
   for (let i = 1; i <= DEFAULT_SERIAL_INVENTORY_COUNT; i += 1) {
