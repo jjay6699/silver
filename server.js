@@ -8,6 +8,17 @@ const { Pool } = require("pg");
 const app = express();
 const port = Number(process.env.PORT || 5500);
 
+const PUBLIC_CORS_ORIGIN = process.env.PUBLIC_CORS_ORIGIN || "*";
+
+function allowPublicCors(req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", PUBLIC_CORS_ORIGIN);
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
+  if (req.method === "OPTIONS") return res.status(204).end();
+  return next();
+}
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   console.error("DATABASE_URL is required.");
@@ -255,12 +266,12 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-app.get("/api/premium-config", async (req, res) => {
+app.get("/api/premium-config", allowPublicCors, async (req, res) => {
   const config = await readPremiumConfig();
   res.json(config);
 });
 
-app.get("/api/serials/summary", async (req, res) => {
+app.get("/api/serials/summary", allowPublicCors, async (req, res) => {
   try {
     const summary = await serialSummary();
     res.json(summary);
