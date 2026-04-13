@@ -663,9 +663,11 @@ function setMintBalanceText() {
 
 function formatFiat(value, currency = currentCurrency) {
   const symbol = currency === "AUD" ? "A$" : "$";
-  const number = Number(value || 0).toLocaleString(currency === "AUD" ? "en-AU" : "en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  const numeric = Number(value || 0);
+  const useThreeDecimals = Math.abs(numeric) < 1 && numeric !== 0;
+  const number = numeric.toLocaleString(currency === "AUD" ? "en-AU" : "en-US", {
+    minimumFractionDigits: useThreeDecimals ? 3 : 2,
+    maximumFractionDigits: useThreeDecimals ? 3 : 2,
   });
   return `${symbol}${number}`;
 }
