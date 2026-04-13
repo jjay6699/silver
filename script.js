@@ -586,14 +586,21 @@ function renderMintFeed() {
     updateMintTotals();
     return;
   }
+  const escapeHtml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   container.innerHTML = mintedItems
     .map(
       (item) => `
       <div class="feed-item">
-        <div class="serial">${item.serial}</div>
-        <div>${item.ounces} oz</div>
-        <div>${item.slvr} TPC</div>
-        <div>${item.usd}</div>
+        <div class="serial">${escapeHtml(item.serial)}</div>
+        <div>${escapeHtml(item.ounces)} oz</div>
+        <div>${escapeHtml(item.slvr)} TPC</div>
+        <div>${escapeHtml(item.usd)}</div>
       </div>
     `
     )

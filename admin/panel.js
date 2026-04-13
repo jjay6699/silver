@@ -108,17 +108,25 @@ async function loadMintHistory() {
     return;
   }
 
+  const escapeHtml = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   mintsTableBodyEl.innerHTML = items
     .map((item) => {
       const value = item.usd_text || (Number.isFinite(Number(item.usd_raw)) ? `$${Number(item.usd_raw).toFixed(2)}` : "--");
       return `
         <tr>
           <td>${formatDate(item.minted_at || item.created_at)}</td>
-          <td title="${String(item.wallet_address || "")}">${shortWallet(item.wallet_address)}</td>
-          <td>${String(item.serial || "")}</td>
+          <td title="${escapeHtml(item.wallet_address)}">${escapeHtml(shortWallet(item.wallet_address))}</td>
+          <td>${escapeHtml(item.serial)}</td>
           <td>${Number(item.ounces || 0).toFixed(2)}</td>
           <td>${Number(item.slvr || 0).toFixed(0)}</td>
-          <td>${value}</td>
+          <td>${escapeHtml(value)}</td>
         </tr>
       `;
     })
