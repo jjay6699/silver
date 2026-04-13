@@ -5,7 +5,7 @@ const ETH_PRICE_ENDPOINTS = [
 ];
 const FX_ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 const PRICE_CACHE_KEY = "slvr_abc_price_cache_v2"; // bump key to drop stale pricing
-const PRICE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const PRICE_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 const MINT_HISTORY_LIMIT = 50;
 const PREMIUM_CONFIG_TTL_MS = 5 * 60 * 1000;
 const ETHERS_CDNS = [
@@ -160,6 +160,8 @@ async function fetchAbcSpotPriceAud() {
 
 function parseAbcPrice(html = "") {
   const regexes = [
+    /1oz\s+Fine\s+Silver\s+Bullion\s+Button[\s\S]{0,400}?\$\s*([0-9][0-9,]*\.[0-9]{2})/i,
+    /1oz\s+Fine\s+Silver\s+Bullion\s+Button[\s\S]{0,400}?AUD\s*\$?\s*([0-9][0-9,]*\.[0-9]{2})/i,
     /1\s*oz[\s\S]{0,120}?\$?\s*([0-9][0-9,]*\.[0-9]{2})/i,
     /\$\s*([0-9][0-9,]*\.[0-9]{2})[\s\S]{0,120}?1\s*oz/i,
   ];
