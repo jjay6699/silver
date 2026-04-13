@@ -135,6 +135,27 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function requireSameOrigin(req, res, next) {
+  const host = String(req.get("host") || "").toLowerCase();
+  if (!host) return res.status(403).json({ error: "Invalid origin" });
+  const origin = req.get("origin");
+  const referer = req.get("referer");
+  const matchesHost = (value) => {
+    try {
+      const url = new URL(value);
+      return url.host.toLowerCase() === host;
+    } catch {
+      return false;
+    }
+  };
+  if (origin) {
+    if (!matchesHost(origin)) return res.status(403).json({ error: "Invalid origin" });
+  } else if (referer) {
+    if (!matchesHost(referer)) return res.status(403).json({ error: "Invalid referer" });
+  }
+  return next();
+}
+
 function validatePremiumConfig(percent, fixedAud) {
   if (!Number.isFinite(percent) || percent < 0 || percent > 1) {
     return "premiumPercent must be a number between 0 and 1";
@@ -280,7 +301,7 @@ app.get("/api/serials/summary", allowPublicCors, async (req, res) => {
   }
 });
 
-app.post("/api/admin/login", (req, res) => {
+app.post("/api/admin/login", requireSameOrigin, (req, res) => {
   const username = String(req.body?.username || "");
   const password = String(req.body?.password || "");
   pool
@@ -300,7 +321,7 @@ app.post("/api/admin/login", (req, res) => {
     .catch(() => res.status(500).json({ error: "Login failed" }));
 });
 
-app.post("/api/admin/logout", (req, res) => {
+app.post("/api/admin/logout", requireSameOrigin, (req, res) => {
   const cookies = parseCookies(req.headers.cookie || "");
   const token = cookies[SESSION_COOKIE];
   if (token) settingsCache.delete(token);
@@ -313,7 +334,7 @@ app.get("/api/admin/premium-config", requireAdmin, async (req, res) => {
   res.json(config);
 });
 
-app.post("/api/admin/premium-config", requireAdmin, async (req, res) => {
+app.post("/api/admin/premium-config", requireSameOrigin, requireAdmin, async (req, res) => {
   const premiumPercent = Number(req.body?.premiumPercent);
   const fixedAud = Number(req.body?.fixedAud);
   const error = validatePremiumConfig(premiumPercent, fixedAud);
@@ -342,7 +363,7 @@ app.get("/api/admin/serials", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/serials", requireAdmin, async (req, res) => {
+app.post("/api/admin/serials", requireSameOrigin, requireAdmin, async (req, res) => {
   const mode = req.body?.mode === "append" ? "append" : "replace";
   const serials = parseSerialInput(Array.isArray(req.body?.serials) ? req.body.serials : []);
   if (!serials.length) return res.status(400).json({ error: "No valid serials supplied" });
@@ -420,9 +441,11 @@ app.post("/api/mints/:walletAddress", async (req, res) => {
   const body = req.body || {};
   const ounces = Number(body.ounces);
   const slvr = Number(body.slvr);
-  const usdText = body.usd == null ? null : String(body.usd);
-  const usdRaw = body.usdRaw == null ? null : Number(body.usdRaw);
-  const ethRaw = body.ethRaw == null ? null : Number(body.ethRaw);
+  const usdRawParsed = body.usdRaw == null ? null : Number(body.usdRaw);
+  const usdRaw = Number.isFinite(usdRawParsed) ? usdRawParsed : null;
+  const usdText = Number.isFinite(usdRaw) ? `$${usdRaw.toFixed(2)}` : null;
+  const ethRawParsed = body.ethRaw == null ? null : Number(body.ethRaw);
+  const ethRaw = Number.isFinite(ethRawParsed) ? ethRawParsed : null;
   const mintedAt = body.ts ? new Date(body.ts) : new Date();
 
   if (!Number.isFinite(ounces) || ounces <= 0) {
