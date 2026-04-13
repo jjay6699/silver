@@ -33,6 +33,40 @@ async function initDb() {
   const sql = fs.readFileSync(sqlPath, "utf8");
   await pool.query(sql);
   await ensureDefaultSerialInventory();
+  await ensureDefaultAdminUser();
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const iterations = 120000;
+  const keylen = 64;
+  const digest = "sha512";
+  const hash = crypto.pbkdf2Sync(password, salt, iterations, keylen, digest).toString("hex");
+  return { hash, salt, iterations, digest };
+}
+
+function verifyPassword(password, record) {
+  const { password_salt, password_iter, password_digest, password_hash } = record;
+  const hash = crypto
+    .pbkdf2Sync(password, password_salt, Number(password_iter), 64, password_digest)
+    .toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(password_hash, "hex"));
+}
+
+async function ensureDefaultAdminUser() {
+  const username = ADMIN_USERNAME;
+  const password = ADMIN_PASSWORD;
+  if (!password) {
+    console.warn("ADMIN_PASSWORD is required to seed admin user.");
+    return;
+  }
+  const existing = await pool.query("SELECT 1 FROM admin_users WHERE username = $1 LIMIT 1", [username]);
+  if (existing.rows?.length) return;
+  const { hash, salt, iterations, digest } = hashPassword(password);
+  await pool.query(
+    `INSERT INTO admin_users (username, password_hash, password_salt, password_iter, password_digest, updated_at)
+     VALUES ($1, $2, $3, $4, $5, NOW())`,
+    [username, hash, salt, iterations, digest]
+  );
 }
 
 function parseCookies(header = "") {
@@ -238,12 +272,21 @@ app.get("/api/serials/summary", async (req, res) => {
 app.post("/api/admin/login", (req, res) => {
   const username = String(req.body?.username || "");
   const password = String(req.body?.password || "");
-  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Invalid username or password" });
-  }
-  const token = createSession();
-  setAuthCookie(res, token);
-  return res.json({ ok: true });
+  pool
+    .query(
+      "SELECT username, password_hash, password_salt, password_iter, password_digest FROM admin_users WHERE username = $1 LIMIT 1",
+      [username]
+    )
+    .then((result) => {
+      const record = result.rows?.[0];
+      if (!record || !verifyPassword(password, record)) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      const token = createSession();
+      setAuthCookie(res, token);
+      return res.json({ ok: true });
+    })
+    .catch(() => res.status(500).json({ error: "Login failed" }));
 });
 
 app.post("/api/admin/logout", (req, res) => {

@@ -31,5 +31,15 @@ CREATE TABLE IF NOT EXISTS serial_inventory (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS admin_users (
+  username TEXT PRIMARY KEY,
+  password_hash TEXT NOT NULL,
+  password_salt TEXT NOT NULL,
+  password_iter INTEGER NOT NULL,
+  password_digest TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_serial_inventory_available
   ON serial_inventory (is_active, is_allocated, serial);
