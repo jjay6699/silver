@@ -55,10 +55,11 @@ const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
 const ETH_DISPLAY_DECIMALS = 6;
-const DISPLAY_SPOT_PERCENT_PREMIUM = 0.2; // 20% over ABC spot
-const DISPLAY_SPOT_FIXED_AUD = 8.5; // A$8.50 fixed add-on per oz
-const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over displayed spot
-const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed maintenance add-on per oz
+const DISPLAY_SPOT_PERCENT_PREMIUM = 0.0; // SBA product price used directly
+const DISPLAY_SPOT_FIXED_AUD = 0.0; // SBA product price used directly
+const DEFAULT_MINT_PERCENT_PREMIUM = 0.0; // SBA product price used directly
+const DEFAULT_MINT_FIXED_AUD = 0.0; // SBA product price used directly
+const USE_SBA_PRODUCT_PRICE = true;
 const TPC_PER_COIN = 1000;
 let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
 let mintFixedAud = DEFAULT_MINT_FIXED_AUD;
@@ -105,6 +106,12 @@ async function fetchSerialSummary() {
 }
 
 async function fetchPremiumConfig(forceFresh = false) {
+  if (USE_SBA_PRODUCT_PRICE) {
+    mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
+    mintFixedAud = DEFAULT_MINT_FIXED_AUD;
+    premiumConfigLoadedAt = Date.now();
+    return;
+  }
   if (!forceFresh && Date.now() - premiumConfigLoadedAt < PREMIUM_CONFIG_TTL_MS) return;
   try {
     const res = await fetch(`${getMintApiBase()}/api/premium-config`, { cache: "no-store" });
@@ -159,18 +166,22 @@ async function fetchAbcSpotPriceAud() {
 }
 
 function parseAbcPrice(html = "") {
-  const regexes = [
-    /1oz\s+Fine\s+Silver\s+Bullion\s+Button[\s\S]{0,400}?\$\s*([0-9][0-9,]*\.[0-9]{2})/i,
-    /1oz\s+Fine\s+Silver\s+Bullion\s+Button[\s\S]{0,400}?AUD\s*\$?\s*([0-9][0-9,]*\.[0-9]{2})/i,
-    /1\s*oz[\s\S]{0,120}?\$?\s*([0-9][0-9,]*\.[0-9]{2})/i,
-    /\$\s*([0-9][0-9,]*\.[0-9]{2})[\s\S]{0,120}?1\s*oz/i,
-  ];
-  for (const rx of regexes) {
-    const match = rx.exec(html);
-    if (match) {
-      const num = parsePriceText(match[1]);
+  const titleRx = /1oz\s+Fine\s+Silver\s+Bullion\s+Button/i;
+  const titleMatch = titleRx.exec(html);
+  if (titleMatch) {
+    const start = titleMatch.index;
+    const window = html.slice(start, start + 1200);
+    const priceMatch = /\$\s*([0-9][0-9,]*\.[0-9]{2})/.exec(window);
+    if (priceMatch) {
+      const num = parsePriceText(priceMatch[1]);
       if (Number.isFinite(num)) return num;
     }
+  }
+
+  const fallbackMatch = /\$\s*([0-9][0-9,]*\.[0-9]{2})/.exec(html);
+  if (fallbackMatch) {
+    const num = parsePriceText(fallbackMatch[1]);
+    if (Number.isFinite(num)) return num;
   }
   return null;
 }
