@@ -57,8 +57,8 @@ const hasMintForm = Boolean(slvrInput);
 const ETH_DISPLAY_DECIMALS = 6;
 const DISPLAY_SPOT_PERCENT_PREMIUM = 0.0; // SBA product price used directly
 const DISPLAY_SPOT_FIXED_AUD = 0.0; // SBA product price used directly
-const DEFAULT_MINT_PERCENT_PREMIUM = 0.0; // SBA product price used directly
-const DEFAULT_MINT_FIXED_AUD = 0.0; // SBA product price used directly
+const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over SBA price
+const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed maintenance add-on per oz
 const USE_SBA_PRODUCT_PRICE = true;
 const TPC_PER_COIN = 1000;
 let mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
@@ -106,12 +106,6 @@ async function fetchSerialSummary() {
 }
 
 async function fetchPremiumConfig(forceFresh = false) {
-  if (USE_SBA_PRODUCT_PRICE) {
-    mintPercentPremium = DEFAULT_MINT_PERCENT_PREMIUM;
-    mintFixedAud = DEFAULT_MINT_FIXED_AUD;
-    premiumConfigLoadedAt = Date.now();
-    return;
-  }
   if (!forceFresh && Date.now() - premiumConfigLoadedAt < PREMIUM_CONFIG_TTL_MS) return;
   try {
     const res = await fetch(`${getMintApiBase()}/api/premium-config`, { cache: "no-store" });
