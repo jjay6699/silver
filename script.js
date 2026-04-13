@@ -1,4 +1,4 @@
-const ABC_SILVER_PRICE_URL = "https://r.jina.ai/http://www.abcbullion.com.au/";
+const ABC_SILVER_PRICE_URL = "https://r.jina.ai/http://www.sbabullion.com.au/product/1oz-fine-silver-bullion-button/";
 const ETH_PRICE_ENDPOINTS = [
   "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd,aud",
   "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,AUD",
@@ -149,19 +149,19 @@ async function fetchAbcSpotPriceAud() {
   const res = await withTimeout(
     (signal) => fetch(abcUrlWithCacheBust(), { cache: "no-store", signal }),
     8000,
-    "ABC price"
+    "SBA price"
   );
   if (!res.ok) throw new Error(`ABC source failed (HTTP ${res.status})`);
   const html = await res.text();
   const parsed = parseAbcPrice(html);
-  if (!Number.isFinite(parsed)) throw new Error("Unable to parse ABC silver price");
+  if (!Number.isFinite(parsed)) throw new Error("Unable to parse SBA silver price");
   return parsed;
 }
 
 function parseAbcPrice(html = "") {
   const regexes = [
-    /\[BUY SILVER\]\(https?:\/\/www\.abcbullion\.com\.au\/store\/silver[^\n]*\)\s*\n+\[([0-9][0-9,]*\.[0-9]{2})\/oz\]\(https?:\/\/www\.abcbullion\.com\.au\/store\/silver/i,
-    /BUY\s+SILVER[\s\S]{0,120}?([0-9][0-9,]*\.[0-9]{2})\s*\/oz/i,
+    /1\s*oz[\s\S]{0,120}?\$?\s*([0-9][0-9,]*\.[0-9]{2})/i,
+    /\$\s*([0-9][0-9,]*\.[0-9]{2})[\s\S]{0,120}?1\s*oz/i,
   ];
   for (const rx of regexes) {
     const match = rx.exec(html);
