@@ -671,10 +671,12 @@ function setMintBalanceText() {
 function formatFiat(value, currency = currentCurrency) {
   const symbol = currency === "AUD" ? "A$" : "$";
   const numeric = Number(value || 0);
-  const useThreeDecimals = Math.abs(numeric) < 1 && numeric !== 0;
-  const number = numeric.toLocaleString(currency === "AUD" ? "en-AU" : "en-US", {
-    minimumFractionDigits: useThreeDecimals ? 3 : 2,
-    maximumFractionDigits: useThreeDecimals ? 3 : 2,
+  const useFourDecimals = Math.abs(numeric) < 1 && numeric !== 0;
+  const decimals = useFourDecimals ? 4 : 2;
+  const rounded = Number(numeric.toFixed(decimals));
+  const number = rounded.toLocaleString(currency === "AUD" ? "en-AU" : "en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
   return `${symbol}${number}`;
 }
