@@ -55,9 +55,9 @@ const fiatValueLabel = document.getElementById("fiatValueLabel");
 const hasPricingUI = Boolean(spotEl && mintEl);
 const hasMintForm = Boolean(slvrInput);
 const ETH_DISPLAY_DECIMALS = 6;
-const DISPLAY_SPOT_PERCENT_PREMIUM = 0.0; // SBA product price used directly
-const DISPLAY_SPOT_FIXED_AUD = 0.0; // SBA product price used directly
-const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over SBA price
+const DISPLAY_SPOT_PERCENT_PREMIUM = 0.0; // spot price used directly
+const DISPLAY_SPOT_FIXED_AUD = 0.0; // spot price used directly
+const DEFAULT_MINT_PERCENT_PREMIUM = 0.04; // 4% maintenance premium over spot price
 const DEFAULT_MINT_FIXED_AUD = 4.0; // A$4.00 fixed maintenance add-on per oz
 const USE_SBA_PRODUCT_PRICE = true;
 const TPC_PER_COIN = 1000;
@@ -150,12 +150,12 @@ async function fetchAbcSpotPriceAud() {
   const res = await withTimeout(
     (signal) => fetch(abcUrlWithCacheBust(), { cache: "no-store", signal }),
     8000,
-    "SBA price"
+    "spot price"
   );
-  if (!res.ok) throw new Error(`ABC source failed (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Spot price source failed (HTTP ${res.status})`);
   const html = await res.text();
   const parsed = parseAbcPrice(html);
-  if (!Number.isFinite(parsed)) throw new Error("Unable to parse SBA silver price");
+  if (!Number.isFinite(parsed)) throw new Error("Unable to parse silver spot price");
   return parsed;
 }
 
@@ -740,7 +740,7 @@ function setCurrency(currency) {
   updateFiatDisplays();
   recalcFromInput();
   updateMintTotals();
-  hydratePrices(true); // force fresh fetch on currency switch to ensure USD/AUD reflect latest ABC quote
+  hydratePrices(true); // force fresh fetch on currency switch to ensure USD/AUD reflect latest quote
 }
 
 function toggleMenu() {
