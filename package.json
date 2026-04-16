@@ -5,11 +5,13 @@
   "description": "Silver mint app with Postgres-backed mint history",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "sign:mint": "node scripts/sign-mint.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "ethers": "^6.12.1",
     "pg": "^8.13.1"
   }
 }
