@@ -18,9 +18,9 @@ async function main() {
   const chain = await provider.getNetwork();
   const chainId = Number(chain.chainId);
 
-  const abi = ["function nonces(address) view returns (uint256)"];
+  const abi = ["function mintNonces(address) view returns (uint256)"];
   const token = new ethers.Contract(contract, abi, provider);
-  const nonce = await token.nonces(to);
+  const nonce = await token.mintNonces(to);
 
   const signature = await signMint({
     privateKey,
