@@ -289,7 +289,10 @@ app.get("/api/health", async (req, res) => {
 
 app.get("/api/premium-config", allowPublicCors, async (req, res) => {
   const config = await readPremiumConfig();
-  res.json(config);
+  res.json({
+    ...config,
+    mintContract: process.env.MINT_CONTRACT || "",
+  });
 });
 
 app.get("/api/serials/summary", allowPublicCors, async (req, res) => {

@@ -13,7 +13,10 @@ const ETHERS_CDNS = [
   "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js",
   "https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js",
 ];
-const TREASURY_ADDRESS = "0x3875FB22655D8bd72310E92c57407d741cF5C8B6";
+let mintContractAddress = null;
+const TPC_CONTRACT_ABI = [
+  "function mintWithEth(uint256 amount, uint256 maxCost) external payable"
+];
 
 let spotPriceUsd = null;
 let mintPriceUsd = null;
@@ -123,6 +126,7 @@ async function fetchPremiumConfig(forceFresh = false) {
     } else {
       mintFixedAud = DEFAULT_MINT_FIXED_AUD;
     }
+    mintContractAddress = data?.mintContract || null;
     premiumConfigLoadedAt = Date.now();
   } catch (err) {
     console.warn("Premium config unavailable, using defaults", err.message);
@@ -496,18 +500,31 @@ async function handleMint() {
   const usdValue =
     usdUnitPrice ? ounces * usdUnitPrice : currentCurrency === "USD" ? fiatValue : fx ? fiatValue / fx : null;
 
+  if (!mintContractAddress || !ethers.utils.isAddress(mintContractAddress)) {
+    alert("Minting is currently unavailable: Smart contract address is not configured. Please contact the administrator or set the MINT_CONTRACT environment variable.");
+    return;
+  }
+
   await loadEthers();
   web3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
   const signer = web3Provider.getSigner();
 
-  const ethToSend = ethers.utils.parseEther((ethNeeded || 0).toFixed(6));
+  const ethNeededWei = ethers.utils.parseEther((ethNeeded || 0).toFixed(18));
 
   try {
-    const tx = await signer.sendTransaction({
-      to: TREASURY_ADDRESS,
-      value: ethToSend,
+    console.log("Using smart contract minting at:", mintContractAddress);
+    const tokenContract = new ethers.Contract(mintContractAddress, TPC_CONTRACT_ABI, signer);
+    const tokenAmountWei = ethers.utils.parseUnits(slvr.toFixed(0), 18);
+    const maxCostWei = ethNeededWei.mul(101).div(100); // 1% slippage protection
+
+    const tx = await tokenContract.mintWithEth(tokenAmountWei, maxCostWei, {
+      value: ethNeededWei,
     });
-    console.log("Tx submitted", tx.hash);
+    console.log("Contract transaction submitted", tx.hash);
+    
+    // Wait for the transaction to be mined/confirmed
+    const receipt = await tx.wait();
+    console.log("Transaction confirmed:", receipt.transactionHash || tx.hash);
   } catch (err) {
     console.error("Transaction rejected or failed", err);
     const reason = String(err?.message || "").toLowerCase();
